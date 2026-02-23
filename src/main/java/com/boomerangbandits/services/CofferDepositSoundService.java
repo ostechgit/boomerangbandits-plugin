@@ -5,6 +5,7 @@ import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.regex.Pattern;
+import java.util.concurrent.ScheduledExecutorService;
 import javax.inject.Inject;
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
@@ -39,6 +40,9 @@ public class CofferDepositSoundService {
         ".+ has deposited [\\d,]+ coins into the coffer\\.",
         Pattern.CASE_INSENSITIVE
     );
+
+    @Inject
+    private ScheduledExecutorService executor;
 
     @Inject
     private BoomerangBanditsConfig config;
@@ -78,7 +82,7 @@ public class CofferDepositSoundService {
      * Uses BufferedInputStream so AudioSystem.getAudioInputStream() can mark/reset the stream.
      */
     private void playDepositSound() {
-        Thread t = new Thread(() -> {
+        executor.execute(() -> {
             try (InputStream raw = getClass().getResourceAsStream(
                     "/com/boomerangbandits/coffer-deposit.wav")) {
                 if (raw == null) {
@@ -97,7 +101,5 @@ public class CofferDepositSoundService {
                 log.warn("Could not play coffer deposit sound", e);
             }
         });
-        t.setDaemon(true);
-        t.start();
     }
 }

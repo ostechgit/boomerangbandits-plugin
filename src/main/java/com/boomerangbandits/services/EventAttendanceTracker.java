@@ -129,9 +129,8 @@ public class EventAttendanceTracker {
 
         if (scanDelay == 0) {
             // Refresh clan member list and scan visible players
-            // TODO: Update deprecated getpPlayers() usage
             if (client.getClanChannel() != null) {
-                for (final Player player : client.getPlayers()) {
+                for (final Player player : client.getTopLevelWorldView().players()) {
                     if (player == null) continue;
                     if (isClanMember(player)) {
                         addPlayer(player);
@@ -171,7 +170,7 @@ public class EventAttendanceTracker {
         if (member.getWorld() != client.getWorld()) return;
 
         String memberName = member.getName();
-        for (Player player : client.getPlayers()) {
+        for (Player player : client.getTopLevelWorldView().players()) {
             if (player == null) continue;
             if (nameToKey(memberName).equals(nameToKey(player.getName()))) {
                 addPlayer(player);

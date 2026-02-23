@@ -150,7 +150,7 @@ public class BoomerangPanel extends PluginPanel {
             adminButton.setIcon(new ImageIcon(ImageUtil.loadImageResource(
                 getClass(), "/com/boomerangbandits/profile-icon.png")));
         } catch (Exception e) {
-            adminButton.setText("⚙");
+            adminButton.setText("Admin");
         }
         adminButton.setToolTipText("Admin");
         adminButton.setPreferredSize(new Dimension(28, 28));
@@ -398,14 +398,9 @@ public class BoomerangPanel extends PluginPanel {
      * Reads ClanSettings on the client thread, then updates UI on the EDT.
      */
     public void updateAdminVisibility() {
-        log.debug("[BoomerangPanel] updateAdminVisibility() called");
         clientThread.invoke(() -> {
             boolean isAdmin = clanValidator.isAdmin();
-            log.debug("[BoomerangPanel] isAdmin result: {}", isAdmin);
-            SwingUtilities.invokeLater(() -> {
-                adminButton.setVisible(isAdmin);
-                log.info("[BoomerangPanel] Admin button visibility set to: {}", isAdmin);
-            });
+            SwingUtilities.invokeLater(() -> adminButton.setVisible(isAdmin));
         });
     }
 
