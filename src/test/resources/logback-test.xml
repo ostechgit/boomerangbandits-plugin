@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <!-- Console appender for general RuneLite logs (reduced verbosity) -->
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+        <!-- Only show WARN and ERROR from other plugins/client -->
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>WARN</level>
+        </filter>
+    </appender>
+
+    <!-- File appender specifically for Boomerang Bandits plugin -->
+    <appender name="BOOMERANG_FILE" class="ch.qos.logback.core.FileAppender">
+        <file>logs/boomerang-bandits.log</file>
+        <append>false</append> <!-- Overwrite on each run -->
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- Rolling file appender (keeps history) -->
+    <appender name="BOOMERANG_ROLLING" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>logs/boomerang-bandits-current.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <!-- Daily rollover -->
+            <fileNamePattern>logs/boomerang-bandits-%d{yyyy-MM-dd}.log</fileNamePattern>
+            <!-- Keep 7 days of history -->
+            <maxHistory>7</maxHistory>
+        </rollingPolicy>
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- Console appender for Boomerang Bandits (shows everything) -->
+    <appender name="BOOMERANG_CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{HH:mm:ss.SSS} %highlight(%-5level) %cyan([Boomerang]) %logger{20} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- Logger for Boomerang Bandits plugin - DEBUG level, logs to file and console -->
+    <logger name="com.boomerangbandits" level="DEBUG" additivity="false">
+        <appender-ref ref="BOOMERANG_FILE" />
+        <appender-ref ref="BOOMERANG_ROLLING" />
+        <appender-ref ref="BOOMERANG_CONSOLE" />
+    </logger>
+
+    <!-- Root logger - only WARN and above for everything else -->
+    <root level="WARN">
+        <appender-ref ref="CONSOLE" />
+    </root>
+</configuration>

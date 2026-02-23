@@ -1,0 +1,64 @@
+plugins {
+    id 'java'
+}
+
+def runeLiteVersion = 'latest.release'
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_11
+    targetCompatibility = JavaVersion.VERSION_11
+}
+
+repositories {
+    mavenLocal()
+    maven {
+        url = uri('https://repo.runelite.net')
+        content {
+            includeGroupByRegex("net\\.runelite.*")
+        }
+    }
+    mavenCentral()
+}
+
+dependencies {
+    compileOnly(group: 'net.runelite', name: 'client', version: runeLiteVersion)
+    compileOnly 'org.projectlombok:lombok:1.18.30'
+    annotationProcessor 'org.projectlombok:lombok:1.18.30'
+
+    testImplementation 'junit:junit:4.12'
+    testImplementation(group: 'net.runelite', name: 'client', version: runeLiteVersion)
+    testImplementation group: 'net.runelite', name: 'jshell', version: runeLiteVersion
+}
+
+group = 'com.boomerangbandits'
+version = '1.0.0'
+
+// Allow overriding the backend URL at build time:
+//   ./gradlew run -PbackendUrl=https://boomerangbingo-staging.up.railway.app/api
+// Defaults to production URL when not specified.
+def backendUrl = project.findProperty('backendUrl') ?: 'https://boomerangbandits.cc/api'
+
+processResources {
+    // Re-run whenever backendUrl changes (inputs.property tracks this)
+    inputs.property('backendUrl', backendUrl)
+    filesMatching('**/api.properties') {
+        expand(backendUrl: backendUrl)
+    }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+    options.release.set(11)
+}
+
+tasks.named('test') {
+    enabled = true
+}
+
+tasks.register('run', JavaExec) {
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = "com.boomerangbandits.BoomerangBanditsPluginTest"
+    jvmArgs "-ea",
+           "--add-opens", "java.desktop/com.apple.eawt=ALL-UNNAMED"
+    args "--developer-mode", "--debug"
+}
