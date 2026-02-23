@@ -4,8 +4,6 @@ import com.boomerangbandits.BoomerangBanditsConfig;
 import java.io.IOException;
 import java.util.regex.Pattern;
 import javax.inject.Inject;
-import javax.sound.sampled.LineUnavailableException;
-import javax.sound.sampled.UnsupportedAudioFileException;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.ChatMessageType;
 import net.runelite.api.events.ChatMessage;
@@ -76,7 +74,7 @@ public class CofferDepositSoundService {
     private void playDepositSound() {
         try {
             audioPlayer.play(getClass(), "/com/boomerangbandits/coffer-deposit.wav", 0f);
-        } catch (IOException | UnsupportedAudioFileException | LineUnavailableException e) {
+        } catch (Exception e) {
             log.warn("Could not play coffer deposit sound", e);
         }
     }
