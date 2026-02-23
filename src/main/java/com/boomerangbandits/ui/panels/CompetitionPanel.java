@@ -174,7 +174,7 @@ public class CompetitionPanel extends JPanel {
         headerLabel.setForeground(Color.WHITE);
         headerLabel.setFont(UIConstants.deriveFont(headerLabel.getFont(), UIConstants.FONT_SIZE_MEDIUM, UIConstants.FONT_BOLD));
 
-        JLabel arrowLabel = new JLabel("▼");
+        JLabel arrowLabel = new JLabel("v");
         arrowLabel.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
         arrowLabel.setFont(UIConstants.deriveFont(arrowLabel.getFont(), UIConstants.FONT_SIZE_SMALL));
 
@@ -239,7 +239,7 @@ public class CompetitionPanel extends JPanel {
             public void mouseClicked(java.awt.event.MouseEvent e) {
                 boolean nowVisible = !formBody.isVisible();
                 formBody.setVisible(nowVisible);
-                arrowLabel.setText(nowVisible ? "▲" : "▼");
+                arrowLabel.setText(nowVisible ? "v" : ">");
                 listPanel.revalidate();
                 listPanel.repaint();
             }

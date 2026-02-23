@@ -193,7 +193,7 @@ public class ClanValidator {
         }
         
         ClanRank rank = member.getRank();
-        log.info("[ClanValidator] getCurrentRank() for '{}': rank={}, rankValue={}", 
+        log.trace("[ClanValidator] getCurrentRank() for '{}': rank={}, rankValue={}", 
             playerName, rank, rank != null ? rank.getRank() : "null");
         
         return rank;
