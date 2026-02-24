@@ -17,7 +17,6 @@ import com.boomerangbandits.ui.BoomerangPanel;
 import com.boomerangbandits.ui.EventOverlay;
 import com.boomerangbandits.ui.panels.ClanHubPanel;
 import com.boomerangbandits.util.ClanValidator;
-import com.boomerangbandits.util.EventFilterManager;
 import com.google.inject.Provides;
 import java.awt.Color;
 import java.awt.image.BufferedImage;
@@ -81,7 +80,6 @@ public class BoomerangBanditsPlugin extends Plugin {
     // Phase 2: Services
     @Inject private WomApiService womApi;
     @Inject private CompetitionScheduler competitionScheduler;
-    @Inject private EventFilterManager eventFilterManager;
 
     // Clan Rank Sync
     @Inject private com.boomerangbandits.services.ClanRankSyncService clanRankSyncService;
