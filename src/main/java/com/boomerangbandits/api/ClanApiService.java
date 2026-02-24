@@ -3,7 +3,6 @@ package com.boomerangbandits.api;
 import com.boomerangbandits.BoomerangBanditsConfig;
 import com.boomerangbandits.api.models.AuthResponse;
 import com.boomerangbandits.api.models.LeaderboardEntry;
-import com.boomerangbandits.api.models.MemberProfile;
 import com.boomerangbandits.api.models.PlayerProfile;
 import com.boomerangbandits.api.models.PluginConfigResponse;
 import com.boomerangbandits.api.models.RankSummaryResponse;
@@ -136,27 +135,6 @@ public class ClanApiService {
             },
             onError
         );
-    }
-
-    /**
-     * GET /api/members/me
-     *
-     * Fetches the authenticated member's profile.
-     *
-     * @param memberCode the authenticated member's code
-     * @param onSuccess  callback with MemberProfile on success
-     * @param onError    callback with error message on failure
-     */
-    public void fetchMemberProfile(@Nonnull String memberCode,
-                                   @Nonnull Consumer<MemberProfile> onSuccess,
-                                   @Nonnull Consumer<String> onError) {
-        Request request = new Request.Builder()
-            .url(ApiConstants.BACKEND_BASE_URL + "/members/me")
-            .header("X-Member-Code", memberCode)
-            .get()
-            .build();
-
-        executeAsync(request, MemberProfile.class, onSuccess, onError);
     }
 
     // ======================================================================

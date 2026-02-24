@@ -193,7 +193,7 @@ public class ClanHubPanel extends JPanel implements Scrollable {
         if (ranks != null) {
             for (RankSummaryResponse.RankCount rc : ranks) {
                 if (rc.getCount() > 0) {
-                    rosterContent.add(buildRankRow(capitalize(rc.getRank()), rc.getCount()));
+                    rosterContent.add(buildRankRow(UIConstants.capitalize(rc.getRank()), rc.getCount()));
                 }
             }
         }
@@ -294,11 +294,6 @@ public class ClanHubPanel extends JPanel implements Scrollable {
         button.addActionListener(e -> LinkBrowser.browse(url));
         linksPanel.add(button);
         linksPanel.add(Box.createVerticalStrut(3));
-    }
-
-    private String capitalize(String str) {
-        if (str == null || str.isEmpty()) return str;
-        return str.substring(0, 1).toUpperCase() + str.substring(1);
     }
 
 
