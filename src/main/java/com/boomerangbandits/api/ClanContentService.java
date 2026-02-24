@@ -3,7 +3,6 @@ package com.boomerangbandits.api;
 import com.boomerangbandits.BoomerangBanditsConfig;
 import com.boomerangbandits.api.models.*;
 import com.boomerangbandits.util.CachedData;
-import com.boomerangbandits.util.DevModeDataProvider;
 import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.*;
@@ -49,15 +48,6 @@ public class ClanContentService {
         if (activeEventCache.isFresh()) {
             log.debug("Returning cached active event");
             onSuccess.accept(activeEventCache.getData());
-            return;
-        }
-        
-        // Dev mode check
-        if (config.devMode()) {
-            log.debug("Dev mode: returning mock active event");
-            ActiveEvent devData = DevModeDataProvider.getActiveEvent();
-            activeEventCache.update(devData);
-            onSuccess.accept(devData);
             return;
         }
         

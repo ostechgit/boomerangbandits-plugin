@@ -7,7 +7,6 @@ import com.boomerangbandits.api.models.MemberProfile;
 import com.boomerangbandits.api.models.PlayerProfile;
 import com.boomerangbandits.api.models.PluginConfigResponse;
 import com.boomerangbandits.api.models.RankSummaryResponse;
-import com.boomerangbandits.util.DevModeDataProvider;
 import com.google.gson.Gson;
 import java.io.IOException;
 import java.util.List;
@@ -32,7 +31,6 @@ import okhttp3.Response;
  * HTTP client for the Boomerang Bandits backend API.
  *
  * All calls are async (OkHttp enqueue). Never blocks the game thread.
- * In dev mode, returns hardcoded data from DevModeDataProvider.
  *
  * Error handling: tracks consecutive failures. After maxRetryAttempts,
  * enters degraded mode (stops retrying, uses cached data).
@@ -96,12 +94,6 @@ public class ClanApiService {
     public void verifyMember(long accountHash, @Nonnull String rsn, @Nonnull String authToken,
                              @Nonnull Consumer<AuthResponse> onSuccess,
                              @Nonnull Consumer<String> onError) {
-        if (config.devMode()) {
-            AuthResponse devResponse = DevModeDataProvider.getAuthResponse(rsn);
-            onSuccess.accept(devResponse);
-            return;
-        }
-
         String memberCode = config.memberCode();
         String json = gson.toJson(new VerifyRequest(rsn, authToken, memberCode));
 
@@ -128,12 +120,6 @@ public class ClanApiService {
     public void fetchPluginConfig(@Nonnull String memberCode,
                                   @Nonnull Consumer<PluginConfigResponse> onSuccess,
                                   @Nonnull Consumer<String> onError) {
-        if (config.devMode()) {
-            PluginConfigResponse devConfig = DevModeDataProvider.getPluginConfig();
-            onSuccess.accept(devConfig);
-            return;
-        }
-
         Request request = new Request.Builder()
             .url(ApiConstants.BACKEND_BASE_URL + "/plugin/config")
             .header("X-Member-Code", memberCode)
@@ -164,12 +150,6 @@ public class ClanApiService {
     public void fetchMemberProfile(@Nonnull String memberCode,
                                    @Nonnull Consumer<MemberProfile> onSuccess,
                                    @Nonnull Consumer<String> onError) {
-        if (config.devMode()) {
-            MemberProfile devProfile = DevModeDataProvider.getMemberProfile("DevPlayer");
-            onSuccess.accept(devProfile);
-            return;
-        }
-
         Request request = new Request.Builder()
             .url(ApiConstants.BACKEND_BASE_URL + "/members/me")
             .header("X-Member-Code", memberCode)
@@ -285,11 +265,6 @@ public class ClanApiService {
      */
     public void fetchPlayerProfile(@Nonnull Consumer<PlayerProfile> onSuccess,
                                    @Nonnull Consumer<String> onError) {
-        if (config.devMode()) {
-            onSuccess.accept(DevModeDataProvider.getPlayerProfile("DevPlayer"));
-            return;
-        }
-
         String memberCode = config.memberCode();
         if (memberCode == null || memberCode.isEmpty()) {
             onError.accept("Not authenticated");
@@ -318,11 +293,6 @@ public class ClanApiService {
     public void fetchLeaderboard(int page, int perPage,
                                  @Nonnull Consumer<LeaderboardResponse> onSuccess,
                                  @Nonnull Consumer<String> onError) {
-        if (config.devMode()) {
-            onSuccess.accept(DevModeDataProvider.getLeaderboard(page, perPage));
-            return;
-        }
-
         Request request = new Request.Builder()
             .url(ApiConstants.BACKEND_BASE_URL + "/leaderboard?page=" + page + "&per_page=" + perPage)
             .get()
@@ -342,11 +312,6 @@ public class ClanApiService {
      */
     public void fetchDailyXp(@Nonnull Consumer<com.boomerangbandits.api.models.DailyXpResponse> onSuccess,
                               @Nonnull Consumer<String> onError) {
-        if (config.devMode()) {
-            onSuccess.accept(new com.boomerangbandits.api.models.DailyXpResponse());
-            return;
-        }
-
         String memberCode = config.memberCode();
         if (memberCode == null || memberCode.isEmpty()) {
             onError.accept("Not authenticated");
@@ -374,11 +339,6 @@ public class ClanApiService {
     public void fetchPlayerChallenge(
             @Nonnull Consumer<com.boomerangbandits.api.models.PlayerChallenge> onSuccess,
             @Nonnull Consumer<String> onError) {
-        if (config.devMode()) {
-            onError.accept("No dev data for challenges");
-            return;
-        }
-
         String memberCode = config.memberCode();
         if (memberCode == null || memberCode.isEmpty()) {
             onError.accept("Not authenticated");
@@ -407,11 +367,6 @@ public class ClanApiService {
     public void fetchRankSummary(boolean includeZero,
                                  @Nonnull Consumer<com.boomerangbandits.api.models.RankSummaryResponse> onSuccess,
                                  @Nonnull Consumer<String> onError) {
-        if (config.devMode()) {
-            onSuccess.accept(DevModeDataProvider.getRankSummary());
-            return;
-        }
-
         String memberCode = config.memberCode();
         if (memberCode == null || memberCode.isEmpty()) {
             onError.accept("Not authenticated");
