@@ -2,43 +2,21 @@ package com.boomerangbandits.ui.panels;
 
 import com.boomerangbandits.api.AdminApiService;
 import com.boomerangbandits.api.models.AttendanceEntry;
-import com.boomerangbandits.api.models.AttendanceResult;
 import com.boomerangbandits.api.models.RankChange;
 import com.boomerangbandits.services.EventAttendanceTracker;
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.Cursor;
-import java.awt.Dimension;
-import java.awt.Font;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.Insets;
-import java.awt.Rectangle;
-import java.util.List;
-import javax.inject.Inject;
-import javax.swing.BorderFactory;
-import javax.swing.BoxLayout;
-import javax.swing.JButton;
-import javax.swing.JLabel;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JSpinner;
-import javax.swing.SpinnerNumberModel;
-import javax.swing.JScrollPane;
-import javax.swing.JTextArea;
-import javax.swing.JTextField;
-import javax.swing.Scrollable;
-import javax.swing.SwingUtilities;
-import javax.swing.Timer;
-import javax.swing.border.EmptyBorder;
-
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.client.ui.ColorScheme;
 
+import javax.inject.Inject;
+import javax.swing.*;
+import javax.swing.border.EmptyBorder;
+import java.awt.*;
+import java.util.List;
+
 /**
  * Admin panel — attendance ingestion, rank changes, announcements, roster sync.
- *
+ * <p>
  * Layout rules:
  * - Top-level panel uses BoxLayout (Rule 2) — no internal JScrollPane (Rule 1)
  * - Every direct BoxLayout child has setMaximumSize + setAlignmentX(LEFT_ALIGNMENT) (Rule 4)
@@ -111,8 +89,8 @@ public class AdminPanel extends JPanel implements Scrollable {
         JPanel section = createSection("Event Attendance");
 
         addLabelRow(section,
-            "<html>Start tracking when the event begins. Stop & Submit when done — "
-            + "attendance is sent directly to the backend.</html>", 10f);
+                "<html>Start tracking when the event begins. Stop & Submit when done — "
+                        + "attendance is sent directly to the backend.</html>", 10f);
 
         section.add(javax.swing.Box.createVerticalStrut(6));
 
@@ -129,7 +107,9 @@ public class AdminPanel extends JPanel implements Scrollable {
         JLabel nameLabel = new JLabel("Event name:");
         nameLabel.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
         nameLabel.setFont(nameLabel.getFont().deriveFont(11f));
-        c.gridx = 0; c.weightx = 0; c.fill = GridBagConstraints.NONE;
+        c.gridx = 0;
+        c.weightx = 0;
+        c.fill = GridBagConstraints.NONE;
         c.anchor = GridBagConstraints.WEST;
         nameRow.add(nameLabel, c);
 
@@ -138,10 +118,12 @@ public class AdminPanel extends JPanel implements Scrollable {
         eventNameField.setForeground(Color.WHITE);
         eventNameField.setCaretColor(Color.WHITE);
         eventNameField.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(ColorScheme.MEDIUM_GRAY_COLOR),
-            new EmptyBorder(2, 4, 2, 4)
+                BorderFactory.createLineBorder(ColorScheme.MEDIUM_GRAY_COLOR),
+                new EmptyBorder(2, 4, 2, 4)
         ));
-        c.gridx = 1; c.weightx = 1.0; c.fill = GridBagConstraints.HORIZONTAL;
+        c.gridx = 1;
+        c.weightx = 1.0;
+        c.fill = GridBagConstraints.HORIZONTAL;
         c.insets = new Insets(0, 0, 0, 0);
         nameRow.add(eventNameField, c);
 
@@ -155,19 +137,24 @@ public class AdminPanel extends JPanel implements Scrollable {
         thresholdRow.setAlignmentX(LEFT_ALIGNMENT);
 
         GridBagConstraints tc = new GridBagConstraints();
-        tc.gridy = 0; tc.insets = new Insets(0, 0, 0, 4);
+        tc.gridy = 0;
+        tc.insets = new Insets(0, 0, 0, 4);
 
         JLabel thresholdLabel = new JLabel("Min. time (min):");
         thresholdLabel.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
         thresholdLabel.setFont(thresholdLabel.getFont().deriveFont(11f));
-        tc.gridx = 0; tc.weightx = 1.0; tc.fill = GridBagConstraints.HORIZONTAL;
+        tc.gridx = 0;
+        tc.weightx = 1.0;
+        tc.fill = GridBagConstraints.HORIZONTAL;
         tc.anchor = GridBagConstraints.WEST;
         thresholdRow.add(thresholdLabel, tc);
 
         // default 10 min, range 1–120
         thresholdSpinner = new JSpinner(new SpinnerNumberModel(10, 1, 120, 1));
         thresholdSpinner.setPreferredSize(new Dimension(52, 22));
-        tc.gridx = 1; tc.weightx = 0; tc.fill = GridBagConstraints.NONE;
+        tc.gridx = 1;
+        tc.weightx = 0;
+        tc.fill = GridBagConstraints.NONE;
         tc.insets = new Insets(0, 0, 0, 0);
         thresholdRow.add(thresholdSpinner, tc);
 
@@ -223,8 +210,8 @@ public class AdminPanel extends JPanel implements Scrollable {
             int secs = attendanceTracker.getEventDurationSeconds();
             int mins = secs / 60;
             attendanceStatusLabel.setText(String.format(
-                "Running %02d:%02d — %d members seen",
-                mins, secs % 60, attendanceTracker.getMemberCount()
+                    "Running %02d:%02d — %d members seen",
+                    mins, secs % 60, attendanceTracker.getMemberCount()
             ));
         });
         liveTimer.start();
@@ -244,35 +231,35 @@ public class AdminPanel extends JPanel implements Scrollable {
         attendanceStatusLabel.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
 
         adminApi.submitAttendance(
-            eventName.isEmpty() ? "Unnamed Event" : eventName,
-            duration,
-            entries,
-            result -> SwingUtilities.invokeLater(() -> {
-                if (result.isSuccess()) {
-                    attendanceStatusLabel.setText("Done — event ended");
-                    attendanceStatusLabel.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
-                    attendanceResultLabel.setText(String.format(
-                        "Submitted %d, matched %d, %d pts each",
-                        result.getTotalSubmitted(), result.getMatched(), result.getPointsAwarded()
-                    ));
-                    attendanceResultLabel.setForeground(new Color(0x4CAF50));
-                    if (result.getUnmatched() != null && !result.getUnmatched().isEmpty()) {
-                        JOptionPane.showMessageDialog(this,
-                            "Unmatched RSNs (not in backend):\n\n"
-                                + String.join("\n", result.getUnmatched()),
-                            "Unmatched Players", JOptionPane.INFORMATION_MESSAGE);
+                eventName.isEmpty() ? "Unnamed Event" : eventName,
+                duration,
+                entries,
+                result -> SwingUtilities.invokeLater(() -> {
+                    if (result.isSuccess()) {
+                        attendanceStatusLabel.setText("Done — event ended");
+                        attendanceStatusLabel.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
+                        attendanceResultLabel.setText(String.format(
+                                "Submitted %d, matched %d, %d pts each",
+                                result.getTotalSubmitted(), result.getMatched(), result.getPointsAwarded()
+                        ));
+                        attendanceResultLabel.setForeground(new Color(0x4CAF50));
+                        if (result.getUnmatched() != null && !result.getUnmatched().isEmpty()) {
+                            JOptionPane.showMessageDialog(this,
+                                    "Unmatched RSNs (not in backend):\n\n"
+                                            + String.join("\n", result.getUnmatched()),
+                                    "Unmatched Players", JOptionPane.INFORMATION_MESSAGE);
+                        }
+                        eventNameField.setText("");
+                    } else {
+                        attendanceResultLabel.setText("Submission failed");
+                        attendanceResultLabel.setForeground(new Color(0xFF5252));
                     }
-                    eventNameField.setText("");
-                } else {
-                    attendanceResultLabel.setText("Submission failed");
+                }),
+                error -> SwingUtilities.invokeLater(() -> {
+                    attendanceResultLabel.setText(error instanceof SecurityException
+                            ? "Access denied" : "Error: " + error.getMessage());
                     attendanceResultLabel.setForeground(new Color(0xFF5252));
-                }
-            }),
-            error -> SwingUtilities.invokeLater(() -> {
-                attendanceResultLabel.setText(error instanceof SecurityException
-                    ? "Access denied" : "Error: " + error.getMessage());
-                attendanceResultLabel.setForeground(new Color(0xFF5252));
-            })
+                })
         );
     }
 
@@ -297,7 +284,9 @@ public class AdminPanel extends JPanel implements Scrollable {
         JLabel rsnLbl = new JLabel("RSN:");
         rsnLbl.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
         rsnLbl.setFont(rsnLbl.getFont().deriveFont(11f));
-        c.gridx = 0; c.gridy = 0; c.weightx = 0;
+        c.gridx = 0;
+        c.gridy = 0;
+        c.weightx = 0;
         proposeForm.add(rsnLbl, c);
 
         JTextField proposeRsnField = new JTextField();
@@ -305,16 +294,21 @@ public class AdminPanel extends JPanel implements Scrollable {
         proposeRsnField.setForeground(Color.WHITE);
         proposeRsnField.setCaretColor(Color.WHITE);
         proposeRsnField.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(ColorScheme.MEDIUM_GRAY_COLOR),
-            new EmptyBorder(2, 4, 2, 4)));
-        c.gridx = 1; c.weightx = 1.0; c.insets = new Insets(2, 0, 2, 0);
+                BorderFactory.createLineBorder(ColorScheme.MEDIUM_GRAY_COLOR),
+                new EmptyBorder(2, 4, 2, 4)));
+        c.gridx = 1;
+        c.weightx = 1.0;
+        c.insets = new Insets(2, 0, 2, 0);
         proposeForm.add(proposeRsnField, c);
 
         // New rank field
         JLabel rankLbl = new JLabel("New rank:");
         rankLbl.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
         rankLbl.setFont(rankLbl.getFont().deriveFont(11f));
-        c.gridx = 0; c.gridy = 1; c.weightx = 0; c.insets = new Insets(2, 0, 2, 4);
+        c.gridx = 0;
+        c.gridy = 1;
+        c.weightx = 0;
+        c.insets = new Insets(2, 0, 2, 4);
         proposeForm.add(rankLbl, c);
 
         JTextField proposeRankField = new JTextField();
@@ -322,16 +316,21 @@ public class AdminPanel extends JPanel implements Scrollable {
         proposeRankField.setForeground(Color.WHITE);
         proposeRankField.setCaretColor(Color.WHITE);
         proposeRankField.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(ColorScheme.MEDIUM_GRAY_COLOR),
-            new EmptyBorder(2, 4, 2, 4)));
-        c.gridx = 1; c.weightx = 1.0; c.insets = new Insets(2, 0, 2, 0);
+                BorderFactory.createLineBorder(ColorScheme.MEDIUM_GRAY_COLOR),
+                new EmptyBorder(2, 4, 2, 4)));
+        c.gridx = 1;
+        c.weightx = 1.0;
+        c.insets = new Insets(2, 0, 2, 0);
         proposeForm.add(proposeRankField, c);
 
         // Reason field
         JLabel reasonLbl = new JLabel("Reason:");
         reasonLbl.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
         reasonLbl.setFont(reasonLbl.getFont().deriveFont(11f));
-        c.gridx = 0; c.gridy = 2; c.weightx = 0; c.insets = new Insets(2, 0, 2, 4);
+        c.gridx = 0;
+        c.gridy = 2;
+        c.weightx = 0;
+        c.insets = new Insets(2, 0, 2, 4);
         proposeForm.add(reasonLbl, c);
 
         JTextField proposeReasonField = new JTextField();
@@ -339,9 +338,11 @@ public class AdminPanel extends JPanel implements Scrollable {
         proposeReasonField.setForeground(Color.WHITE);
         proposeReasonField.setCaretColor(Color.WHITE);
         proposeReasonField.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(ColorScheme.MEDIUM_GRAY_COLOR),
-            new EmptyBorder(2, 4, 2, 4)));
-        c.gridx = 1; c.weightx = 1.0; c.insets = new Insets(2, 0, 2, 0);
+                BorderFactory.createLineBorder(ColorScheme.MEDIUM_GRAY_COLOR),
+                new EmptyBorder(2, 4, 2, 4)));
+        c.gridx = 1;
+        c.weightx = 1.0;
+        c.insets = new Insets(2, 0, 2, 0);
         proposeForm.add(proposeReasonField, c);
 
         section.add(proposeForm);
@@ -365,20 +366,20 @@ public class AdminPanel extends JPanel implements Scrollable {
             proposeResultLabel.setText("Proposing...");
             proposeResultLabel.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
             adminApi.proposeRankChange(rsn, rank, reason,
-                result -> SwingUtilities.invokeLater(() -> {
-                    proposeBtn.setEnabled(true);
-                    proposeResultLabel.setText(result.getMemberRsn() + ": " + result.getOldRank() + " -> " + result.getNewRank());
-                    proposeResultLabel.setForeground(new Color(0x4CAF50));
-                    proposeRsnField.setText("");
-                    proposeRankField.setText("");
-                    proposeReasonField.setText("");
-                    refreshRankChanges();
-                }),
-                error -> SwingUtilities.invokeLater(() -> {
-                    proposeBtn.setEnabled(true);
-                    proposeResultLabel.setText(error instanceof SecurityException ? "Access denied" : "Failed");
-                    proposeResultLabel.setForeground(new Color(0xFF5252));
-                })
+                    result -> SwingUtilities.invokeLater(() -> {
+                        proposeBtn.setEnabled(true);
+                        proposeResultLabel.setText(result.getMemberRsn() + ": " + result.getOldRank() + " -> " + result.getNewRank());
+                        proposeResultLabel.setForeground(new Color(0x4CAF50));
+                        proposeRsnField.setText("");
+                        proposeRankField.setText("");
+                        proposeReasonField.setText("");
+                        refreshRankChanges();
+                    }),
+                    error -> SwingUtilities.invokeLater(() -> {
+                        proposeBtn.setEnabled(true);
+                        proposeResultLabel.setText(error instanceof SecurityException ? "Access denied" : "Failed");
+                        proposeResultLabel.setForeground(new Color(0xFF5252));
+                    })
             );
         });
         section.add(proposeBtn);
@@ -409,18 +410,18 @@ public class AdminPanel extends JPanel implements Scrollable {
     private void refreshRankChanges() {
         refreshRankChangesButton.setEnabled(false);
         adminApi.fetchPendingRankChanges(
-            changes -> SwingUtilities.invokeLater(() -> {
-                refreshRankChangesButton.setEnabled(true);
-                updateRankChangesList(changes);
-            }),
-            error -> SwingUtilities.invokeLater(() -> {
-                refreshRankChangesButton.setEnabled(true);
-                rankChangesContainer.removeAll();
-                JLabel errLabel = new JLabel(error instanceof SecurityException ? "Access denied" : "Failed to load");
-                errLabel.setForeground(new Color(0xFF5252));
-                rankChangesContainer.add(errLabel);
-                rankChangesContainer.revalidate();
-            })
+                changes -> SwingUtilities.invokeLater(() -> {
+                    refreshRankChangesButton.setEnabled(true);
+                    updateRankChangesList(changes);
+                }),
+                error -> SwingUtilities.invokeLater(() -> {
+                    refreshRankChangesButton.setEnabled(true);
+                    rankChangesContainer.removeAll();
+                    JLabel errLabel = new JLabel(error instanceof SecurityException ? "Access denied" : "Failed to load");
+                    errLabel.setForeground(new Color(0xFF5252));
+                    rankChangesContainer.add(errLabel);
+                    rankChangesContainer.revalidate();
+                })
         );
     }
 
@@ -444,8 +445,8 @@ public class AdminPanel extends JPanel implements Scrollable {
         JPanel card = new JPanel(new GridBagLayout());
         card.setBackground(ColorScheme.DARK_GRAY_COLOR);
         card.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createMatteBorder(0, 0, 1, 0, ColorScheme.MEDIUM_GRAY_COLOR),
-            new EmptyBorder(6, 6, 6, 6)
+                BorderFactory.createMatteBorder(0, 0, 1, 0, ColorScheme.MEDIUM_GRAY_COLOR),
+                new EmptyBorder(6, 6, 6, 6)
         ));
         card.setMaximumSize(new Dimension(Integer.MAX_VALUE, 80));
         card.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -477,8 +478,11 @@ public class AdminPanel extends JPanel implements Scrollable {
             info.add(byLabel);
         }
 
-        c.gridx = 0; c.gridy = 0; c.weightx = 1.0;
-        c.fill = GridBagConstraints.HORIZONTAL; c.anchor = GridBagConstraints.WEST;
+        c.gridx = 0;
+        c.gridy = 0;
+        c.weightx = 1.0;
+        c.fill = GridBagConstraints.HORIZONTAL;
+        c.anchor = GridBagConstraints.WEST;
         c.insets = new Insets(0, 0, 0, 4);
         card.add(info, c);
 
@@ -488,16 +492,19 @@ public class AdminPanel extends JPanel implements Scrollable {
         doneBtn.addActionListener(e -> {
             doneBtn.setEnabled(false);
             adminApi.actualizeRankChange(change.getId(),
-                success -> SwingUtilities.invokeLater(this::refreshRankChanges),
-                error -> SwingUtilities.invokeLater(() -> {
-                    doneBtn.setEnabled(true);
-                    log.warn("Failed to actualize rank change {}", change.getId(), error);
-                })
+                    success -> SwingUtilities.invokeLater(this::refreshRankChanges),
+                    error -> SwingUtilities.invokeLater(() -> {
+                        doneBtn.setEnabled(true);
+                        log.warn("Failed to actualize rank change {}", change.getId(), error);
+                    })
             );
         });
 
-        c.gridx = 1; c.weightx = 0; c.fill = GridBagConstraints.NONE;
-        c.anchor = GridBagConstraints.CENTER; c.insets = new Insets(0, 0, 0, 0);
+        c.gridx = 1;
+        c.weightx = 0;
+        c.fill = GridBagConstraints.NONE;
+        c.anchor = GridBagConstraints.CENTER;
+        c.insets = new Insets(0, 0, 0, 0);
         card.add(doneBtn, c);
 
         return card;
@@ -549,17 +556,17 @@ public class AdminPanel extends JPanel implements Scrollable {
         announcementResultLabel.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
 
         adminApi.updateAnnouncement(message,
-            success -> SwingUtilities.invokeLater(() -> {
-                updateAnnouncementButton.setEnabled(true);
-                announcementResultLabel.setText("Announcement updated");
-                announcementResultLabel.setForeground(new Color(0x4CAF50));
-            }),
-            error -> SwingUtilities.invokeLater(() -> {
-                updateAnnouncementButton.setEnabled(true);
-                announcementResultLabel.setText(error instanceof SecurityException
-                    ? "Access denied" : "Failed: " + error.getMessage());
-                announcementResultLabel.setForeground(new Color(0xFF5252));
-            })
+                success -> SwingUtilities.invokeLater(() -> {
+                    updateAnnouncementButton.setEnabled(true);
+                    announcementResultLabel.setText("Announcement updated");
+                    announcementResultLabel.setForeground(new Color(0x4CAF50));
+                }),
+                error -> SwingUtilities.invokeLater(() -> {
+                    updateAnnouncementButton.setEnabled(true);
+                    announcementResultLabel.setText(error instanceof SecurityException
+                            ? "Access denied" : "Failed: " + error.getMessage());
+                    announcementResultLabel.setForeground(new Color(0xFF5252));
+                })
         );
     }
 
@@ -571,8 +578,8 @@ public class AdminPanel extends JPanel implements Scrollable {
         JPanel section = createSection("Roster Sync");
 
         addLabelRow(section,
-            "<html>Push the current in-game clan roster to the backend. "
-            + "Uses add_only mode — existing members are not removed.</html>", 10f);
+                "<html>Push the current in-game clan roster to the backend. "
+                        + "Uses add_only mode — existing members are not removed.</html>", 10f);
         section.add(javax.swing.Box.createVerticalStrut(6));
 
         syncRosterButton = makeButton("Sync Roster");
@@ -615,8 +622,8 @@ public class AdminPanel extends JPanel implements Scrollable {
         section.setLayout(new BoxLayout(section, BoxLayout.Y_AXIS));
         section.setBackground(ColorScheme.DARKER_GRAY_COLOR);
         section.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(ColorScheme.MEDIUM_GRAY_COLOR),
-            new EmptyBorder(8, 8, 8, 8)
+                BorderFactory.createLineBorder(ColorScheme.MEDIUM_GRAY_COLOR),
+                new EmptyBorder(8, 8, 8, 8)
         ));
         section.setAlignmentX(LEFT_ALIGNMENT);
         // Rule 4: cap width so BoxLayout parent never stretches us wider than the viewport
@@ -687,9 +694,28 @@ public class AdminPanel extends JPanel implements Scrollable {
     // causing horizontal overflow.
     // =========================================================================
 
-    @Override public Dimension getPreferredScrollableViewportSize() { return getPreferredSize(); }
-    @Override public int getScrollableUnitIncrement(Rectangle r, int o, int d) { return 16; }
-    @Override public int getScrollableBlockIncrement(Rectangle r, int o, int d) { return 16; }
-    @Override public boolean getScrollableTracksViewportWidth() { return true; }
-    @Override public boolean getScrollableTracksViewportHeight() { return false; }
+    @Override
+    public Dimension getPreferredScrollableViewportSize() {
+        return getPreferredSize();
+    }
+
+    @Override
+    public int getScrollableUnitIncrement(Rectangle r, int o, int d) {
+        return 16;
+    }
+
+    @Override
+    public int getScrollableBlockIncrement(Rectangle r, int o, int d) {
+        return 16;
+    }
+
+    @Override
+    public boolean getScrollableTracksViewportWidth() {
+        return true;
+    }
+
+    @Override
+    public boolean getScrollableTracksViewportHeight() {
+        return false;
+    }
 }

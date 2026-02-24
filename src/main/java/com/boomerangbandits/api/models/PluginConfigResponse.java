@@ -22,7 +22,9 @@ public class PluginConfigResponse {
     private boolean teamEventActive;
     private String websiteUrl;
 
-    /** Backend field name is discordInviteUrl */
+    /**
+     * Backend field name is discordInviteUrl
+     */
     @SerializedName("discordInviteUrl")
     private String discordUrl;
 
@@ -32,7 +34,9 @@ public class PluginConfigResponse {
      */
     private String dinkConfigUrl;
 
-    /** Outer wrapper matching the actual API response shape: {"success": true, "config": {...}} */
+    /**
+     * Outer wrapper matching the actual API response shape: {"success": true, "config": {...}}
+     */
     @Data
     public static class Wrapper {
         private boolean success;

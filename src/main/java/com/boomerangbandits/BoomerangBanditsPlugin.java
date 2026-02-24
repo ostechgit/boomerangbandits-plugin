@@ -1,48 +1,25 @@
 package com.boomerangbandits;
 
-import com.boomerangbandits.api.AdminApiService;
-import com.boomerangbandits.api.AuthHeaderInterceptor;
-import com.boomerangbandits.api.ClanApiService;
-import com.google.inject.Binder;
-import com.boomerangbandits.api.ClanContentService;
-import com.boomerangbandits.api.WomApiService;
+import com.boomerangbandits.api.*;
 import com.boomerangbandits.api.WomApiService.SyncMember;
-import java.util.ArrayList;
-import net.runelite.api.clan.ClanSettings;
-import net.runelite.client.util.Text;
-import com.boomerangbandits.services.EventAttendanceTracker;
 import com.boomerangbandits.services.CompetitionScheduler;
 import com.boomerangbandits.services.ConfigSyncService;
+import com.boomerangbandits.services.EventAttendanceTracker;
 import com.boomerangbandits.ui.BoomerangPanel;
 import com.boomerangbandits.ui.EventOverlay;
-import com.boomerangbandits.ui.panels.ClanHubPanel;
 import com.boomerangbandits.util.ClanValidator;
+import com.google.inject.Binder;
 import com.google.inject.Provides;
-import java.awt.Color;
-import java.awt.image.BufferedImage;
-import java.util.concurrent.ScheduledExecutorService;
-import javax.inject.Inject;
-import javax.swing.SwingUtilities;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Client;
 import net.runelite.api.GameState;
-import net.runelite.api.events.ClanChannelChanged;
-import net.runelite.api.events.ClanMemberJoined;
-import net.runelite.api.events.ClanMemberLeft;
-import net.runelite.api.events.CommandExecuted;
-import net.runelite.api.events.GameStateChanged;
-import net.runelite.api.events.GameTick;
-import net.runelite.api.events.PlayerDespawned;
-import net.runelite.api.events.PlayerSpawned;
+import net.runelite.api.clan.ClanSettings;
+import net.runelite.api.events.*;
 import net.runelite.client.callback.ClientThread;
-import net.runelite.client.events.ConfigChanged;
 import net.runelite.client.config.ConfigManager;
-import javax.crypto.Mac;
-import javax.crypto.spec.SecretKeySpec;
-import java.nio.charset.StandardCharsets;
-import java.util.Base64;
 import net.runelite.client.eventbus.EventBus;
 import net.runelite.client.eventbus.Subscribe;
+import net.runelite.client.events.ConfigChanged;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.ui.ClientToolbar;
@@ -50,48 +27,79 @@ import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.NavigationButton;
 import net.runelite.client.ui.overlay.OverlayManager;
 import net.runelite.client.util.ImageUtil;
+import net.runelite.client.util.Text;
+
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
+import javax.inject.Inject;
+import javax.swing.*;
+import java.awt.image.BufferedImage;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Base64;
+import java.util.concurrent.ScheduledExecutorService;
 
 @PluginDescriptor(
-    name = "Boomerang Bandits",
-    description = "Official plugin for Boomerang Bandits clan members",
-    tags = {"clan", "boomerang", "bandits", "events", "tracking", "cc"}
+        name = "Boomerang Bandits",
+        description = "Official plugin for Boomerang Bandits clan members",
+        tags = {"clan", "boomerang", "bandits", "events", "tracking", "cc"}
 )
 @Slf4j
 public class BoomerangBanditsPlugin extends Plugin {
 
     // RuneLite injected dependencies
-    @Inject private Client client;
-    @Inject private ClientThread clientThread;
-    @Inject private ConfigManager configManager;
-    @Inject private ClientToolbar clientToolbar;
-    @Inject private EventBus eventBus;
-    @Inject private ScheduledExecutorService executor;
-    @Inject private OverlayManager overlayManager;
+    @Inject
+    private Client client;
+    @Inject
+    private ClientThread clientThread;
+    @Inject
+    private ConfigManager configManager;
+    @Inject
+    private ClientToolbar clientToolbar;
+    @Inject
+    private EventBus eventBus;
+    @Inject
+    private ScheduledExecutorService executor;
+    @Inject
+    private OverlayManager overlayManager;
 
     // Plugin components
-    @Inject private BoomerangBanditsConfig config;
-    @Inject private AuthHeaderInterceptor authInterceptor;
-    @Inject private ClanApiService clanApi;
-    @Inject private ClanContentService contentService;
-    @Inject private AdminApiService adminApi;
-    @Inject private ClanValidator clanValidator;
-    @Inject private ConfigSyncService configSyncService;
+    @Inject
+    private BoomerangBanditsConfig config;
+    @Inject
+    private AuthHeaderInterceptor authInterceptor;
+    @Inject
+    private ClanApiService clanApi;
+    @Inject
+    private ClanContentService contentService;
+    @Inject
+    private AdminApiService adminApi;
+    @Inject
+    private ClanValidator clanValidator;
+    @Inject
+    private ConfigSyncService configSyncService;
 
     // Phase 2: Services
-    @Inject private WomApiService womApi;
-    @Inject private CompetitionScheduler competitionScheduler;
+    @Inject
+    private WomApiService womApi;
+    @Inject
+    private CompetitionScheduler competitionScheduler;
 
     // Clan Rank Sync
-    @Inject private com.boomerangbandits.services.ClanRankSyncService clanRankSyncService;
+    @Inject
+    private com.boomerangbandits.services.ClanRankSyncService clanRankSyncService;
 
     // Attendance tracking
-    @Inject private EventAttendanceTracker attendanceTracker;
+    @Inject
+    private EventAttendanceTracker attendanceTracker;
 
     // Sound effects
-    @Inject private com.boomerangbandits.services.CofferDepositSoundService cofferDepositSoundService;
+    @Inject
+    private com.boomerangbandits.services.CofferDepositSoundService cofferDepositSoundService;
 
     // Phase 6: Overlay
-    @Inject private EventOverlay eventOverlay;
+    @Inject
+    private EventOverlay eventOverlay;
 
     // UI
     private BoomerangPanel panel;
@@ -110,15 +118,15 @@ public class BoomerangBanditsPlugin extends Plugin {
         panel = injector.getInstance(BoomerangPanel.class);
 
         BufferedImage icon = ImageUtil.loadImageResource(
-            getClass(), "/com/boomerangbandits/boomerang-icon.png"
+                getClass(), "/com/boomerangbandits/boomerang-icon.png"
         );
 
         navButton = NavigationButton.builder()
-            .tooltip("Boomerang Bandits")
-            .icon(icon)
-            .priority(config.menuPriority())
-            .panel(panel)
-            .build();
+                .tooltip("Boomerang Bandits")
+                .icon(icon)
+                .priority(config.menuPriority())
+                .panel(panel)
+                .build();
 
         clientToolbar.addNavigation(navButton);
 
@@ -165,12 +173,12 @@ public class BoomerangBanditsPlugin extends Plugin {
                         // Still re-validate clan channel after world hop
                         // (clan channel reloads on hop)
                         executor.schedule(
-                            () -> clientThread.invoke(() -> {
-                                if (clanValidator.validate()) {
-                                    SwingUtilities.invokeLater(() -> panel.updateAdminVisibility());
-                                }
-                            }),
-                            5, java.util.concurrent.TimeUnit.SECONDS);
+                                () -> clientThread.invoke(() -> {
+                                    if (clanValidator.validate()) {
+                                        SwingUtilities.invokeLater(() -> panel.updateAdminVisibility());
+                                    }
+                                }),
+                                5, java.util.concurrent.TimeUnit.SECONDS);
                     }
                     break;
 
@@ -203,21 +211,21 @@ public class BoomerangBanditsPlugin extends Plugin {
                 clanValidator.reset();
                 log.debug("Clan channel changed, attempting authentication in 2s");
                 executor.schedule(
-                    () -> clientThread.invoke(this::attemptAuthentication),
-                    2, java.util.concurrent.TimeUnit.SECONDS
+                        () -> clientThread.invoke(this::attemptAuthentication),
+                        2, java.util.concurrent.TimeUnit.SECONDS
                 );
             } else if (authenticated) {
                 // Re-validate — player may have left the CC
                 executor.schedule(
-                    () -> clientThread.invoke(() -> {
-                        if (!clanValidator.validate()) {
-                            log.info("Player left clan channel — locking panel");
-                            handleLogout();
-                        } else {
-                            SwingUtilities.invokeLater(() -> panel.updateAdminVisibility());
-                        }
-                    }),
-                    2, java.util.concurrent.TimeUnit.SECONDS
+                        () -> clientThread.invoke(() -> {
+                            if (!clanValidator.validate()) {
+                                log.info("Player left clan channel — locking panel");
+                                handleLogout();
+                            } else {
+                                SwingUtilities.invokeLater(() -> panel.updateAdminVisibility());
+                            }
+                        }),
+                        2, java.util.concurrent.TimeUnit.SECONDS
                 );
             }
         } catch (Exception e) {
@@ -245,7 +253,7 @@ public class BoomerangBanditsPlugin extends Plugin {
                 panel.refreshConfig();
                 // Update announcement if changed
                 panel.getHomePanel().updateAnnouncement(config.announcementMessage());
-                
+
                 // Update admin visibility if admin rank threshold changed
                 if (event.getKey().equals("adminRankThreshold")) {
                     panel.updateAdminVisibility();
@@ -260,7 +268,7 @@ public class BoomerangBanditsPlugin extends Plugin {
     public void onCommandExecuted(CommandExecuted event) {
         try {
             String command = event.getCommand().toLowerCase();
-            
+
             switch (command) {
                 case "syncranks":
                     if (!clanValidator.isAdmin()) {
@@ -269,15 +277,15 @@ public class BoomerangBanditsPlugin extends Plugin {
                     }
                     log.info("Manually syncing clan ranks to backend...");
                     clanRankSyncService.syncRanksManually(
-                        response -> {
-                            if (response.getInvalid() > 0 || 
-                                (response.getErrors() != null && !response.getErrors().isEmpty())) {
-                                log.warn("✅ Rank sync completed with {} errors", response.getInvalid());
-                            } else {
-                                log.info("✅ Rank sync completed successfully");
-                            }
-                        },
-                        error -> log.error("❌ Rank sync failed", error)
+                            response -> {
+                                if (response.getInvalid() > 0 ||
+                                        (response.getErrors() != null && !response.getErrors().isEmpty())) {
+                                    log.warn("✅ Rank sync completed with {} errors", response.getInvalid());
+                                } else {
+                                    log.info("✅ Rank sync completed successfully");
+                                }
+                            },
+                            error -> log.error("❌ Rank sync failed", error)
                     );
                     break;
 
@@ -334,8 +342,8 @@ public class BoomerangBanditsPlugin extends Plugin {
 
         // Wait a moment for clan channel to load, then try authentication on the client thread
         executor.schedule(
-            () -> clientThread.invoke(this::attemptAuthentication),
-            2, java.util.concurrent.TimeUnit.SECONDS
+                () -> clientThread.invoke(this::attemptAuthentication),
+                2, java.util.concurrent.TimeUnit.SECONDS
         );
     }
 
@@ -347,15 +355,15 @@ public class BoomerangBanditsPlugin extends Plugin {
         if (!clanValidator.validate()) {
             log.debug("Clan validation failed — features disabled");
             SwingUtilities.invokeLater(() ->
-                panel.getHomePanel().updateStatus("Not in clan", ColorScheme.LIGHT_GRAY_COLOR));
+                    panel.getHomePanel().updateStatus("Not in clan", ColorScheme.LIGHT_GRAY_COLOR));
             return;
         }
 
         log.info("Clan validation successful");
 
         String playerName = client.getLocalPlayer() != null
-            ? client.getLocalPlayer().getName()
-            : "Unknown";
+                ? client.getLocalPlayer().getName()
+                : "Unknown";
 
         SwingUtilities.invokeLater(() -> panel.onLogin(playerName));
 
@@ -417,50 +425,50 @@ public class BoomerangBanditsPlugin extends Plugin {
 
         assert rsn != null;
         clanApi.verifyMember(accountHash, rsn, finalAuthToken,
-            authResponse -> {
-                if (authResponse.isSuccess()) {
-                    authenticated = true;
-                    log.info("Authenticated as: {} (code: {}...)",
-                        rsn,
-                        authResponse.getMemberCode().substring(0,
-                            Math.min(8, authResponse.getMemberCode().length()))
-                    );
+                authResponse -> {
+                    if (authResponse.isSuccess()) {
+                        authenticated = true;
+                        log.info("Authenticated as: {} (code: {}...)",
+                                rsn,
+                                authResponse.getMemberCode().substring(0,
+                                        Math.min(8, authResponse.getMemberCode().length()))
+                        );
 
-                    // Start config sync now that we have a member code
-                    configSyncService.start(executor);
+                        // Start config sync now that we have a member code
+                        configSyncService.start(executor);
 
-                    // Start competition scheduler
-                    competitionScheduler.start(executor);
+                        // Start competition scheduler
+                        competitionScheduler.start(executor);
 
-                    // Start clan rank sync
-                    clanRankSyncService.start(executor);
+                        // Start clan rank sync
+                        clanRankSyncService.start(executor);
 
-                    SwingUtilities.invokeLater(() -> {
-                        panel.onAuthenticated();
-                        panel.getHomePanel().updateAnnouncement(config.announcementMessage());
-                        // Update admin visibility after authentication
-                        panel.updateAdminVisibility();
-                    });
+                        SwingUtilities.invokeLater(() -> {
+                            panel.onAuthenticated();
+                            panel.getHomePanel().updateAnnouncement(config.announcementMessage());
+                            // Update admin visibility after authentication
+                            panel.updateAdminVisibility();
+                        });
 
-                    // Trigger player update now that we're authenticated — must run on client thread
-                    clientThread.invoke(() -> triggerPlayerUpdate(rsn, accountHash));
-                } else if (authResponse.isPending()) {
-                    // Backend created the member row but hasn't issued a code yet.
-                    // Admin will DM the member code — player must enter it in settings.
-                    log.info("[Auth] Member registered as pending — awaiting member code from admin");
-                    SwingUtilities.invokeLater(() ->
-                        panel.getHomePanel().updateStatus(
-                            "Registered! Awaiting member code from admin", ColorScheme.LIGHT_GRAY_COLOR));
-                } else {
-                    log.warn("Authentication failed: {}", authResponse.getError());
+                        // Trigger player update now that we're authenticated — must run on client thread
+                        clientThread.invoke(() -> triggerPlayerUpdate(rsn, accountHash));
+                    } else if (authResponse.isPending()) {
+                        // Backend created the member row but hasn't issued a code yet.
+                        // Admin will DM the member code — player must enter it in settings.
+                        log.info("[Auth] Member registered as pending — awaiting member code from admin");
+                        SwingUtilities.invokeLater(() ->
+                                panel.getHomePanel().updateStatus(
+                                        "Registered! Awaiting member code from admin", ColorScheme.LIGHT_GRAY_COLOR));
+                    } else {
+                        log.warn("Authentication failed: {}", authResponse.getError());
+                    }
+                },
+                error -> {
+                    log.warn("Authentication error: {}", error);
+                    if (clanApi.isDegraded()) {
+                        SwingUtilities.invokeLater(() -> panel.onDegraded());
+                    }
                 }
-            },
-            error -> {
-                log.warn("Authentication error: {}", error);
-                if (clanApi.isDegraded()) {
-                    SwingUtilities.invokeLater(() -> panel.onDegraded());
-                }
-            }
         );
     }
 
@@ -490,8 +498,8 @@ public class BoomerangBanditsPlugin extends Plugin {
             accountType = "normal";
         }
         womApi.updatePlayer(rsn, accountHash, accountType,
-            result -> log.info("[WOM] Player update queued for {} (job: {})", rsn, result.getData() != null ? result.getData().getJobId() : "?"),
-            error -> log.warn("[WOM] Player update failed for {}: {}", rsn, error.getMessage())
+                result -> log.info("[WOM] Player update queued for {} (job: {})", rsn, result.getData() != null ? result.getData().getJobId() : "?"),
+                error -> log.warn("[WOM] Player update failed for {}: {}", rsn, error.getMessage())
         );
     }
 
@@ -518,8 +526,8 @@ public class BoomerangBanditsPlugin extends Plugin {
                 String normalizedRsn = Text.toJagexName(rsn);
                 net.runelite.api.clan.ClanTitle title = clanSettings.titleForRank(member.getRank());
                 String role = title != null && title.getName() != null
-                    ? title.getName().toLowerCase()
-                    : "member";
+                        ? title.getName().toLowerCase()
+                        : "member";
 
                 syncMembers.add(new SyncMember(normalizedRsn, role, "normal", null));
             }
@@ -527,14 +535,14 @@ public class BoomerangBanditsPlugin extends Plugin {
             log.info("[WOM] Syncing {} clan members to backend (add_only)", syncMembers.size());
 
             womApi.syncGroupMembers(11575, "add_only", syncMembers,
-                result -> {
-                    if (result.getData() != null) {
-                        log.info("[WOM] Group sync done — added:{} updated:{} unchanged:{} invalid:{}",
-                            result.getData().getAdded(), result.getData().getUpdated(),
-                            result.getData().getUnchanged(), result.getData().getInvalid());
-                    }
-                },
-                error -> log.error("[WOM] Group sync failed: {}", error.getMessage())
+                    result -> {
+                        if (result.getData() != null) {
+                            log.info("[WOM] Group sync done — added:{} updated:{} unchanged:{} invalid:{}",
+                                    result.getData().getAdded(), result.getData().getUpdated(),
+                                    result.getData().getUnchanged(), result.getData().getInvalid());
+                        }
+                    },
+                    error -> log.error("[WOM] Group sync failed: {}", error.getMessage())
             );
         });
     }
@@ -558,7 +566,7 @@ public class BoomerangBanditsPlugin extends Plugin {
     /**
      * Log clan roster based on config settings.
      * Called when joining clan chat if enabled.
-     * 
+     * <p>
      * IMPORTANT: Must be called on the client thread (use clientThread.invoke())
      * because ClanSettings.titleForRank() requires client thread access.
      */

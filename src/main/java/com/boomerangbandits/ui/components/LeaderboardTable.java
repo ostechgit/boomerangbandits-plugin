@@ -1,35 +1,29 @@
 package com.boomerangbandits.ui.components;
 
 import com.boomerangbandits.ui.UIConstants;
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.Dimension;
-import java.awt.Font;
-import java.util.List;
-import javax.swing.BoxLayout;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JTable;
+import net.runelite.client.ui.ColorScheme;
+
+import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
-import net.runelite.client.ui.ColorScheme;
+import java.awt.*;
+import java.util.List;
 
 /**
  * Reusable leaderboard table with rank, name, and value columns.
  * Styled to match RuneLite's dark theme.
  * <p>
  * Usage:
- *   LeaderboardTable table = new LeaderboardTable("RSN", "Points");
- *   table.setData(entries); // List<String[]> where each is {rank, name, value}
+ * LeaderboardTable table = new LeaderboardTable("RSN", "Points");
+ * table.setData(entries); // List<String[]> where each is {rank, name, value}
  */
 public class LeaderboardTable extends JPanel {
 
     private final LeaderboardTableModel model;
     private final JTable table;
     private final JLabel emptyLabel;
-    private JScrollPane scrollPane;
+    private final JScrollPane scrollPane;
 
     public LeaderboardTable(String nameHeader, String valueHeader) {
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
@@ -48,9 +42,9 @@ public class LeaderboardTable extends JPanel {
         table.getTableHeader().setBackground(ColorScheme.DARKER_GRAY_COLOR);
         table.getTableHeader().setForeground(ColorScheme.LIGHT_GRAY_COLOR);
         table.getTableHeader().setFont(UIConstants.deriveFont(
-            table.getFont(),
-            UIConstants.FONT_SIZE_NORMAL,
-            UIConstants.FONT_BOLD
+                table.getFont(),
+                UIConstants.FONT_SIZE_NORMAL,
+                UIConstants.FONT_BOLD
         ));
 
         // Column widths: rank=40, name=flex, value=60
@@ -79,6 +73,7 @@ public class LeaderboardTable extends JPanel {
 
     /**
      * Update the table data.
+     *
      * @param rows list of String[3] arrays: {rank, name, value}
      */
     public void setData(List<String[]> rows) {
@@ -112,10 +107,23 @@ public class LeaderboardTable extends JPanel {
             fireTableDataChanged();
         }
 
-        @Override public int getRowCount() { return data.size(); }
-        @Override public int getColumnCount() { return 3; }
-        @Override public String getColumnName(int col) { return headers[col]; }
-        @Override public Object getValueAt(int row, int col) {
+        @Override
+        public int getRowCount() {
+            return data.size();
+        }
+
+        @Override
+        public int getColumnCount() {
+            return 3;
+        }
+
+        @Override
+        public String getColumnName(int col) {
+            return headers[col];
+        }
+
+        @Override
+        public Object getValueAt(int row, int col) {
             return row < data.size() && col < data.get(row).length ? data.get(row)[col] : "";
         }
     }
@@ -128,15 +136,22 @@ public class LeaderboardTable extends JPanel {
 
         @Override
         public Component getTableCellRendererComponent(JTable t, Object val,
-                boolean sel, boolean focus, int row, int col) {
+                                                       boolean sel, boolean focus, int row, int col) {
             super.getTableCellRendererComponent(t, val, sel, focus, row, col);
             setHorizontalAlignment(CENTER);
             setBackground(ColorScheme.DARK_GRAY_COLOR);
             switch (row) {
-                case 0: setForeground(GOLD); break;
-                case 1: setForeground(SILVER); break;
-                case 2: setForeground(BRONZE); break;
-                default: setForeground(Color.WHITE);
+                case 0:
+                    setForeground(GOLD);
+                    break;
+                case 1:
+                    setForeground(SILVER);
+                    break;
+                case 2:
+                    setForeground(BRONZE);
+                    break;
+                default:
+                    setForeground(Color.WHITE);
             }
             return this;
         }

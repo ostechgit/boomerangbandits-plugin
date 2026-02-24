@@ -27,7 +27,12 @@ public class AttendanceResult {
     @Getter
     private List<String> unmatched; // RSNs that couldn't be matched
 
-    public List<String> getMatchedMembers() { return matched_members; }
-    public void setMatchedMembers(List<String> matched_members) { this.matched_members = matched_members; }
+    public List<String> getMatchedMembers() {
+        return matched_members;
+    }
+
+    public void setMatchedMembers(List<String> matched_members) {
+        this.matched_members = matched_members;
+    }
 
 }

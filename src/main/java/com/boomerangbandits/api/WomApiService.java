@@ -6,21 +6,17 @@ import com.boomerangbandits.api.models.PlayerUpdateResponse;
 import com.boomerangbandits.api.models.WomCompetition;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-import java.io.IOException;
-import java.lang.reflect.Type;
-import java.util.List;
-import java.util.function.Consumer;
+import lombok.extern.slf4j.Slf4j;
+import okhttp3.*;
+
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
-import lombok.extern.slf4j.Slf4j;
-import okhttp3.Call;
-import okhttp3.Callback;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.RequestBody;
-import okhttp3.Response;
+import java.io.IOException;
+import java.lang.reflect.Type;
+import java.util.List;
+import java.util.function.Consumer;
 
 /**
  * WiseOldMan API client (via Backend Proxy).
@@ -54,8 +50,8 @@ public class WomApiService {
      * Backend handles caching and returns fresh data.
      * Uses active_only=true to fetch only currently active competitions.
      */
-    public void fetchCompetitions(@Nonnull Consumer<List<WomCompetition>> onSuccess, 
-                                   @Nonnull Consumer<Exception> onError) {
+    public void fetchCompetitions(@Nonnull Consumer<List<WomCompetition>> onSuccess,
+                                  @Nonnull Consumer<Exception> onError) {
         String url = ApiConstants.BACKEND_BASE_URL + "/wom/competitions?active_only=true";
         log.debug("Fetching competitions from backend API: {}", url);
         Request request = buildRequest(url);
@@ -78,7 +74,8 @@ public class WomApiService {
 
                     String body = response.body().string();
                     log.debug("Backend competitions response body length: {}", body.length());
-                    Type listType = new TypeToken<List<WomCompetition>>() {}.getType();
+                    Type listType = new TypeToken<List<WomCompetition>>() {
+                    }.getType();
                     List<WomCompetition> competitions = gson.fromJson(body, listType);
                     log.debug("Parsed {} competitions from backend API", competitions != null ? competitions.size() : 0);
                     onSuccess.accept(competitions);
@@ -95,8 +92,8 @@ public class WomApiService {
      * Backend handles caching and returns fresh data.
      */
     public void fetchCompetitionDetails(int competitionId,
-                                         @Nonnull Consumer<WomCompetition> onSuccess,
-                                         @Nonnull Consumer<Exception> onError) {
+                                        @Nonnull Consumer<WomCompetition> onSuccess,
+                                        @Nonnull Consumer<Exception> onError) {
         String url = ApiConstants.BACKEND_BASE_URL + "/wom/competitions/" + competitionId;
         Request request = buildRequest(url);
 
@@ -132,7 +129,7 @@ public class WomApiService {
 
     /**
      * POST /api/wom/players/update
-     *
+     * <p>
      * Enqueues a background poll for one account. Non-blocking (202 Accepted).
      * Retry on 503 (queue unavailable). Do not retry on 400/401/403.
      *
@@ -143,9 +140,9 @@ public class WomApiService {
      * @param onError     callback with exception on failure
      */
     public void updatePlayer(@Nonnull String username, long accountHash,
-                              @Nonnull String accountType,
-                              @Nonnull Consumer<PlayerUpdateResponse> onSuccess,
-                              @Nonnull Consumer<Exception> onError) {
+                             @Nonnull String accountType,
+                             @Nonnull Consumer<PlayerUpdateResponse> onSuccess,
+                             @Nonnull Consumer<Exception> onError) {
         String memberCode = config.memberCode();
         if (memberCode == null || memberCode.isEmpty()) {
             onError.accept(new IllegalStateException("Not authenticated"));
@@ -156,11 +153,11 @@ public class WomApiService {
         String json = gson.toJson(new PlayerUpdateRequest(username, accountHash, accountType, ownerTag, false));
 
         Request request = new Request.Builder()
-            .url(ApiConstants.BACKEND_BASE_URL + "/wom/players/update")
-            .addHeader("X-Member-Code", memberCode)
-            .addHeader("User-Agent", ApiConstants.USER_AGENT)
-            .post(RequestBody.create(ApiConstants.JSON, json))
-            .build();
+                .url(ApiConstants.BACKEND_BASE_URL + "/wom/players/update")
+                .addHeader("X-Member-Code", memberCode)
+                .addHeader("User-Agent", ApiConstants.USER_AGENT)
+                .post(RequestBody.create(ApiConstants.JSON, json))
+                .build();
 
         httpClient.newCall(request).enqueue(new Callback() {
             @Override
@@ -174,7 +171,7 @@ public class WomApiService {
                 try (response) {
                     if (response.code() == 202) {
                         PlayerUpdateResponse result = gson.fromJson(
-                            response.body().string(), PlayerUpdateResponse.class);
+                                response.body().string(), PlayerUpdateResponse.class);
                         onSuccess.accept(result);
                     } else {
                         String body = response.body() != null ? response.body().string() : "";
@@ -189,21 +186,21 @@ public class WomApiService {
 
     /**
      * POST /api/wom/groups/{groupId}/sync
-     *
+     * <p>
      * Syncs the clan roster to backend member/account state.
      * mode="add_only" upserts listed members without deactivating missing ones.
      * mode="overwrite" treats the payload as source of truth.
      *
-     * @param groupId  backend group ID (e.g. 11575)
-     * @param mode     "add_only" or "overwrite"
-     * @param members  list of members to sync
+     * @param groupId   backend group ID (e.g. 11575)
+     * @param mode      "add_only" or "overwrite"
+     * @param members   list of members to sync
      * @param onSuccess callback with GroupSyncResponse on 200
      * @param onError   callback with exception on failure
      */
     public void syncGroupMembers(int groupId, @Nonnull String mode,
-                                  @Nonnull List<SyncMember> members,
-                                  @Nonnull Consumer<GroupSyncResponse> onSuccess,
-                                  @Nonnull Consumer<Exception> onError) {
+                                 @Nonnull List<SyncMember> members,
+                                 @Nonnull Consumer<GroupSyncResponse> onSuccess,
+                                 @Nonnull Consumer<Exception> onError) {
         String memberCode = config.memberCode();
         if (memberCode == null || memberCode.isEmpty()) {
             onError.accept(new IllegalStateException("Not authenticated"));
@@ -213,11 +210,11 @@ public class WomApiService {
         String json = gson.toJson(new GroupSyncRequest(mode, members));
 
         Request request = new Request.Builder()
-            .url(ApiConstants.BACKEND_BASE_URL + "/wom/groups/" + groupId + "/sync")
-            .addHeader("X-Member-Code", memberCode)
-            .addHeader("User-Agent", ApiConstants.USER_AGENT)
-            .post(RequestBody.create(ApiConstants.JSON, json))
-            .build();
+                .url(ApiConstants.BACKEND_BASE_URL + "/wom/groups/" + groupId + "/sync")
+                .addHeader("X-Member-Code", memberCode)
+                .addHeader("User-Agent", ApiConstants.USER_AGENT)
+                .post(RequestBody.create(ApiConstants.JSON, json))
+                .build();
 
         httpClient.newCall(request).enqueue(new Callback() {
             @Override
@@ -241,7 +238,7 @@ public class WomApiService {
                         return;
                     }
                     GroupSyncResponse result = gson.fromJson(
-                        response.body().string(), GroupSyncResponse.class);
+                            response.body().string(), GroupSyncResponse.class);
                     if (result.getData() != null && result.getData().getInvalid() > 0) {
                         log.warn("Group sync partial: {} invalid rows", result.getData().getInvalid());
                     }
@@ -257,7 +254,17 @@ public class WomApiService {
     // REQUEST DTOs (write endpoints)
     // ======================================================================
 
-    /** Request body for POST /api/wom/players/update */
+    @Nonnull
+    private Request buildRequest(@Nonnull String url) {
+        return new Request.Builder()
+                .url(url)
+                .addHeader("User-Agent", ApiConstants.USER_AGENT)
+                .build();
+    }
+
+    /**
+     * Request body for POST /api/wom/players/update
+     */
     public static class PlayerUpdateRequest {
         private final String username;
         private final long accountHash;
@@ -266,7 +273,7 @@ public class WomApiService {
         private final boolean force;
 
         public PlayerUpdateRequest(String username, long accountHash, String accountType,
-                                    String ownerTag, boolean force) {
+                                   String ownerTag, boolean force) {
             this.username = username;
             this.accountHash = accountHash;
             this.accountType = accountType;
@@ -275,7 +282,9 @@ public class WomApiService {
         }
     }
 
-    /** Request body for POST /api/wom/groups/{groupId}/sync */
+    /**
+     * Request body for POST /api/wom/groups/{groupId}/sync
+     */
     public static class GroupSyncRequest {
         private final String mode;
         private final List<SyncMember> members;
@@ -286,7 +295,9 @@ public class WomApiService {
         }
     }
 
-    /** A single member entry in a group sync request */
+    /**
+     * A single member entry in a group sync request
+     */
     public static class SyncMember {
         private final String username;
         private final String role;
@@ -299,13 +310,5 @@ public class WomApiService {
             this.accountType = accountType;
             this.ownerTag = ownerTag;
         }
-    }
-
-    @Nonnull
-    private Request buildRequest(@Nonnull String url) {
-        return new Request.Builder()
-            .url(url)
-            .addHeader("User-Agent", ApiConstants.USER_AGENT)
-            .build();
     }
 }

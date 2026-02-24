@@ -1,9 +1,9 @@
 package com.boomerangbandits.ui.components;
 
 import com.boomerangbandits.ui.UIConstants;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import javax.swing.JLabel;
+
+import javax.swing.*;
+import java.awt.*;
 
 /**
  * A JLabel that applies high-quality text rendering hints for improved clarity

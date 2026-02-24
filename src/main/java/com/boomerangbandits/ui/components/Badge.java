@@ -1,29 +1,23 @@
 package com.boomerangbandits.ui.components;
 
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.FontMetrics;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.RenderingHints;
-import javax.swing.JComponent;
+import javax.swing.*;
+import java.awt.*;
 
 /**
  * Small coloured badge for displaying rank, status, or category labels.
  * <p>
  * Usage:
- *   Badge = new Badge("Admin", new Color(0x4CAF50));
- *   panel.add(badge);
+ * Badge = new Badge("Admin", new Color(0x4CAF50));
+ * panel.add(badge);
  */
 public class Badge extends JComponent {
-
-    private String text;
-    private Color bgColor;
-    private final Color textColor;
 
     private static final int PAD_X = 4;
     private static final int PAD_Y = 2;
     private static final int ARC = 10;
+    private final Color textColor;
+    private String text;
+    private Color bgColor;
 
     public Badge(String text, Color bgColor) {
         this(text, bgColor, Color.WHITE);

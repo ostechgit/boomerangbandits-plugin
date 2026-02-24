@@ -1,14 +1,14 @@
 package com.boomerangbandits.services;
 
 import com.boomerangbandits.BoomerangBanditsConfig;
-import java.io.IOException;
-import java.util.regex.Pattern;
-import javax.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.ChatMessageType;
 import net.runelite.api.events.ChatMessage;
 import net.runelite.client.audio.AudioPlayer;
 import net.runelite.client.eventbus.Subscribe;
+
+import javax.inject.Inject;
+import java.util.regex.Pattern;
 
 /**
  * Listens for clan chat coffer deposit messages and plays a sound effect.
@@ -24,12 +24,12 @@ public class CofferDepositSoundService {
     /**
      * Matches clan chat coffer deposit messages.
      * Examples:
-     *   "Zezima has deposited 1,000,000 coins into the coffer."
-     *   "Some Player has deposited 500 coins into the coffer."
+     * "Zezima has deposited 1,000,000 coins into the coffer."
+     * "Some Player has deposited 500 coins into the coffer."
      */
     private static final Pattern COFFER_DEPOSIT_PATTERN = Pattern.compile(
-        ".+ has deposited [\\d,]+ coins into the coffer\\.",
-        Pattern.CASE_INSENSITIVE
+            ".+ has deposited [\\d,]+ coins into the coffer\\.",
+            Pattern.CASE_INSENSITIVE
     );
 
     @Inject

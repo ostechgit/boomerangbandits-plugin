@@ -1,16 +1,13 @@
 package com.boomerangbandits.util;
 
 import com.boomerangbandits.BoomerangBanditsConfig;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Client;
 import net.runelite.api.GameState;
-import net.runelite.api.clan.ClanChannel;
-import net.runelite.api.clan.ClanChannelMember;
-import net.runelite.api.clan.ClanRank;
-import net.runelite.api.clan.ClanSettings;
-import net.runelite.api.clan.ClanTitle;
+import net.runelite.api.clan.*;
+
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 /**
  * Validates that the local player is a member of the Boomerang Bandits clan.
@@ -41,10 +38,10 @@ public class ClanValidator {
      * Add or remove titles here as the clan's rank structure changes.
      */
     private static final String[] ADMIN_TITLE_NAMES = {
-        "owner",
-        "deputy owner",
-        "moderator",
-        "sheriff"
+            "owner",
+            "deputy owner",
+            "moderator",
+            "sheriff"
     };
 
     /**
@@ -71,7 +68,7 @@ public class ClanValidator {
     /**
      * Validate that the local player is in the Boomerang Bandits clan
      * with sufficient rank.
-     * 
+     * <p>
      * Throttled: After initial failure, retries every 5 seconds for 1 minute, then gives up.
      *
      * @return true if the player is a valid clan member, false otherwise
@@ -186,16 +183,16 @@ public class ClanValidator {
 
         String playerName = client.getLocalPlayer().getName();
         ClanChannelMember member = clanChannel.findMember(playerName);
-        
+
         if (member == null) {
             log.debug("[ClanValidator] getCurrentRank() - Player '{}' not found in clan channel", playerName);
             return null;
         }
-        
+
         ClanRank rank = member.getRank();
-        log.trace("[ClanValidator] getCurrentRank() for '{}': rank={}, rankValue={}", 
-            playerName, rank, rank != null ? rank.getRank() : "null");
-        
+        log.trace("[ClanValidator] getCurrentRank() for '{}': rank={}, rankValue={}",
+                playerName, rank, rank != null ? rank.getRank() : "null");
+
         return rank;
     }
 

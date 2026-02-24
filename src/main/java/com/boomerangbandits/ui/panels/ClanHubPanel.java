@@ -24,11 +24,10 @@ public class ClanHubPanel extends JPanel implements Scrollable {
 
     private final BoomerangBanditsConfig config;
     private final ClanApiService clanApi;
-
+    private final RefreshThrottler rosterThrottler = new RefreshThrottler(60 * 60 * 1_000L);
     private JPanel linksPanel;
     private JPanel rosterContent;
     private JTextArea dinkUrlLabel;
-    private final RefreshThrottler rosterThrottler = new RefreshThrottler(60 * 60 * 1_000L);
 
     @Inject
     public ClanHubPanel(BoomerangBanditsConfig config, ClanApiService clanApi) {
@@ -153,9 +152,9 @@ public class ClanHubPanel extends JPanel implements Scrollable {
         }
         rosterThrottler.recordRefresh();
         clanApi.fetchRankSummary(
-            false,
-            summary -> SwingUtilities.invokeLater(() -> updateRosterContent(summary)),
-            error -> log.debug("[ClanHubPanel] Could not fetch rank summary: {}", error)
+                false,
+                summary -> SwingUtilities.invokeLater(() -> updateRosterContent(summary)),
+                error -> log.debug("[ClanHubPanel] Could not fetch rank summary: {}", error)
         );
     }
 
@@ -164,8 +163,8 @@ public class ClanHubPanel extends JPanel implements Scrollable {
         content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
         content.setBackground(ColorScheme.DARK_GRAY_COLOR);
         content.setBorder(new EmptyBorder(
-            UIConstants.PADDING_SMALL, UIConstants.PADDING_STANDARD,
-            UIConstants.PADDING_STANDARD, UIConstants.PADDING_STANDARD
+                UIConstants.PADDING_SMALL, UIConstants.PADDING_STANDARD,
+                UIConstants.PADDING_STANDARD, UIConstants.PADDING_STANDARD
         ));
 
         JLabel loading = new AntialiasedLabel("Loading...");
@@ -211,16 +210,21 @@ public class ClanHubPanel extends JPanel implements Scrollable {
 
         GridBagConstraints c = new GridBagConstraints();
 
-        c.gridx = 0; c.gridy = 0; c.weightx = 1.0;
-        c.fill = GridBagConstraints.HORIZONTAL; c.anchor = GridBagConstraints.WEST;
+        c.gridx = 0;
+        c.gridy = 0;
+        c.weightx = 1.0;
+        c.fill = GridBagConstraints.HORIZONTAL;
+        c.anchor = GridBagConstraints.WEST;
         c.insets = new Insets(0, 0, 0, 4);
         JLabel rankLabel = new AntialiasedLabel(rank);
         rankLabel.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
         rankLabel.setFont(UIConstants.deriveFont(rankLabel.getFont(), UIConstants.FONT_SIZE_SMALL));
         row.add(rankLabel, c);
 
-        c.gridx = 1; c.weightx = 0.0;
-        c.fill = GridBagConstraints.NONE; c.anchor = GridBagConstraints.EAST;
+        c.gridx = 1;
+        c.weightx = 0.0;
+        c.fill = GridBagConstraints.NONE;
+        c.anchor = GridBagConstraints.EAST;
         c.insets = new Insets(0, 0, 0, 0);
         JLabel countLabel = new AntialiasedLabel(count + " members");
         countLabel.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
@@ -235,13 +239,13 @@ public class ClanHubPanel extends JPanel implements Scrollable {
         content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
         content.setBackground(ColorScheme.DARK_GRAY_COLOR);
         content.setBorder(new EmptyBorder(
-            UIConstants.PADDING_SMALL, UIConstants.PADDING_STANDARD,
-            UIConstants.PADDING_STANDARD, UIConstants.PADDING_STANDARD
+                UIConstants.PADDING_SMALL, UIConstants.PADDING_STANDARD,
+                UIConstants.PADDING_STANDARD, UIConstants.PADDING_STANDARD
         ));
 
         // HTML label wraps correctly because scrollWrap gives it a bounded width
         JLabel desc = new JLabel("<html>To enable automatic webhook tracking, paste the URL below into "
-            + "Dink's settings: <b>Advanced &gt; Dynamic Config URL</b></html>");
+                + "Dink's settings: <b>Advanced &gt; Dynamic Config URL</b></html>");
         desc.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
         desc.setFont(UIConstants.deriveFont(desc.getFont(), UIConstants.FONT_SIZE_SMALL));
         desc.setAlignmentX(LEFT_ALIGNMENT);
@@ -274,7 +278,7 @@ public class ClanHubPanel extends JPanel implements Scrollable {
             String url = config.dinkConfigUrl();
             if (url != null && !url.isEmpty()) {
                 Toolkit.getDefaultToolkit().getSystemClipboard()
-                    .setContents(new StringSelection(url), null);
+                        .setContents(new StringSelection(url), null);
                 copyBtn.setText("Copied!");
                 Timer reset = new Timer(2000, ev -> copyBtn.setText("Copy URL"));
                 reset.setRepeats(false);
@@ -361,9 +365,9 @@ public class ClanHubPanel extends JPanel implements Scrollable {
         JPanel row = new JPanel(new GridBagLayout());
         row.setBackground(ColorScheme.DARKER_GRAY_COLOR);
         row.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createMatteBorder(0, 0, 1, 0, ColorScheme.DARK_GRAY_COLOR),
-            new EmptyBorder(UIConstants.SPACING_SMALL, UIConstants.PADDING_STANDARD,
-                UIConstants.SPACING_SMALL, UIConstants.PADDING_STANDARD)
+                BorderFactory.createMatteBorder(0, 0, 1, 0, ColorScheme.DARK_GRAY_COLOR),
+                new EmptyBorder(UIConstants.SPACING_SMALL, UIConstants.PADDING_STANDARD,
+                        UIConstants.SPACING_SMALL, UIConstants.PADDING_STANDARD)
         ));
         row.setAlignmentX(LEFT_ALIGNMENT);
         row.setMaximumSize(new Dimension(Integer.MAX_VALUE, 28));
@@ -373,15 +377,19 @@ public class ClanHubPanel extends JPanel implements Scrollable {
         JLabel actLabel = new JLabel(activity);
         actLabel.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
         actLabel.setFont(UIConstants.deriveFont(actLabel.getFont(), UIConstants.FONT_SIZE_NORMAL));
-        c.gridx = 0; c.weightx = 1.0;
-        c.fill = GridBagConstraints.HORIZONTAL; c.anchor = GridBagConstraints.WEST;
+        c.gridx = 0;
+        c.weightx = 1.0;
+        c.fill = GridBagConstraints.HORIZONTAL;
+        c.anchor = GridBagConstraints.WEST;
         row.add(actLabel, c);
 
         JLabel ptsLabel = new JLabel(points);
         ptsLabel.setForeground(new Color(0x4CAF50));
         ptsLabel.setFont(UIConstants.deriveFont(ptsLabel.getFont(), UIConstants.FONT_SIZE_NORMAL, UIConstants.FONT_BOLD));
-        c.gridx = 1; c.weightx = 0.0;
-        c.fill = GridBagConstraints.NONE; c.anchor = GridBagConstraints.EAST;
+        c.gridx = 1;
+        c.weightx = 0.0;
+        c.fill = GridBagConstraints.NONE;
+        c.anchor = GridBagConstraints.EAST;
         row.add(ptsLabel, c);
 
         return row;
@@ -394,9 +402,28 @@ public class ClanHubPanel extends JPanel implements Scrollable {
     // container will never grow wider than its viewport.
     // =========================================================================
 
-    @Override public Dimension getPreferredScrollableViewportSize() { return getPreferredSize(); }
-    @Override public int getScrollableUnitIncrement(Rectangle r, int o, int d) { return 16; }
-    @Override public int getScrollableBlockIncrement(Rectangle r, int o, int d) { return 16; }
-    @Override public boolean getScrollableTracksViewportWidth() { return true; }
-    @Override public boolean getScrollableTracksViewportHeight() { return false; }
+    @Override
+    public Dimension getPreferredScrollableViewportSize() {
+        return getPreferredSize();
+    }
+
+    @Override
+    public int getScrollableUnitIncrement(Rectangle r, int o, int d) {
+        return 16;
+    }
+
+    @Override
+    public int getScrollableBlockIncrement(Rectangle r, int o, int d) {
+        return 16;
+    }
+
+    @Override
+    public boolean getScrollableTracksViewportWidth() {
+        return true;
+    }
+
+    @Override
+    public boolean getScrollableTracksViewportHeight() {
+        return false;
+    }
 }

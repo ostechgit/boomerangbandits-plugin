@@ -1,17 +1,11 @@
 package com.boomerangbandits.ui.components;
 
 import com.boomerangbandits.ui.UIConstants;
-import java.awt.Cursor;
-import java.awt.Dimension;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.Insets;
-import javax.swing.JButton;
-import javax.swing.JPanel;
-import javax.swing.SwingUtilities;
-import javax.swing.Timer;
-import javax.swing.border.MatteBorder;
 import net.runelite.client.ui.ColorScheme;
+
+import javax.swing.*;
+import javax.swing.border.MatteBorder;
+import java.awt.*;
 
 /**
  * Sticky footer bar pinned to the bottom of BoomerangPanel (outside the scroll area).
@@ -52,7 +46,8 @@ public class PanelFooter extends JPanel {
         });
 
         GridBagConstraints c = new GridBagConstraints();
-        c.gridx = 0; c.gridy = 0;
+        c.gridx = 0;
+        c.gridy = 0;
         c.weightx = 1.0;
         c.fill = GridBagConstraints.NONE;
         c.anchor = GridBagConstraints.CENTER;

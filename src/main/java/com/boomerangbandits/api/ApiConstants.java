@@ -1,10 +1,11 @@
 package com.boomerangbandits.api;
 
+import lombok.extern.slf4j.Slf4j;
+import okhttp3.MediaType;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
-import lombok.extern.slf4j.Slf4j;
-import okhttp3.MediaType;
 
 /**
  * Centralized API configuration constants.
@@ -47,23 +48,11 @@ public final class ApiConstants {
     /**
      * User agent string for all backend API requests.
      * Format: PluginName/Version
-     * 
+     *
      * <p>Helps backend identify and track plugin requests for analytics and debugging.</p>
      */
     public static final String USER_AGENT = "BoomerangBanditsPlugin/1.0";
-    
-    // ========================================================================
-    // WISE OLD MAN API (Deprecated - now proxied through backend)
-    // ========================================================================
-    
-    /**
-     * WOM API is now accessed through the backend proxy at /api/wom/*
-     * Backend handles group ID (11575), caching, and rate limiting.
-     * 
-     * Historical note: Previously used direct WOM API calls.
-     * Migrated to backend proxy on 2026-02-16 for better caching and control.
-     */
-    
+
     // ========================================================================
     // COMMON
     // ========================================================================
@@ -79,7 +68,7 @@ public final class ApiConstants {
      * Used by all services that send JSON payloads (POST/PUT requests).
      */
     public static final MediaType JSON = MediaType.get("application/json; charset=utf-8");
-    
+
     /**
      * Private constructor to prevent instantiation.
      * This is a utility class with only static constants.

@@ -5,23 +5,18 @@ import com.boomerangbandits.api.models.LeaderboardEntry;
 import com.boomerangbandits.ui.UIConstants;
 import com.boomerangbandits.ui.components.LeaderboardTable;
 import com.boomerangbandits.util.RefreshThrottler;
-import java.awt.Cursor;
-import java.awt.FlowLayout;
-import java.awt.Font;
-import javax.swing.BoxLayout;
+import net.runelite.client.ui.ColorScheme;
+
+import javax.inject.Inject;
+import javax.swing.*;
+import javax.swing.border.EmptyBorder;
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
-import javax.inject.Inject;
-import javax.swing.JButton;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.SwingUtilities;
-import javax.swing.border.EmptyBorder;
-import net.runelite.client.ui.ColorScheme;
 
 /**
  * Clan leaderboard panel showing points-based rankings.
- *
+ * <p>
  * Data source: Backend GET /api/leaderboard (paginated)
  * Uses LeaderboardTable reusable component.
  */
@@ -33,9 +28,9 @@ public class LeaderboardPanel extends JPanel {
     private final LeaderboardTable table;
     private final RefreshThrottler refreshThrottler;
 
-    private JLabel pageLabel;
-    private JButton prevButton;
-    private JButton nextButton;
+    private final JLabel pageLabel;
+    private final JButton prevButton;
+    private final JButton nextButton;
     private int currentPage = 1;
     private int totalPages = 1;
 
@@ -52,10 +47,10 @@ public class LeaderboardPanel extends JPanel {
         header.setForeground(java.awt.Color.WHITE);
         header.setFont(UIConstants.deriveFont(header.getFont(), UIConstants.FONT_SIZE_MEDIUM, UIConstants.FONT_BOLD));
         header.setBorder(new EmptyBorder(
-            UIConstants.PADDING_STANDARD,
-            UIConstants.PADDING_STANDARD,
-            UIConstants.PADDING_STANDARD,
-            UIConstants.PADDING_STANDARD
+                UIConstants.PADDING_STANDARD,
+                UIConstants.PADDING_STANDARD,
+                UIConstants.PADDING_STANDARD,
+                UIConstants.PADDING_STANDARD
         ));
         header.setAlignmentX(LEFT_ALIGNMENT);
         add(header);
@@ -95,27 +90,27 @@ public class LeaderboardPanel extends JPanel {
      */
     public void loadPage(int page) {
         clanApi.fetchLeaderboard(page, PER_PAGE,
-            response -> SwingUtilities.invokeLater(() -> {
-                currentPage = response.getPage();
-                totalPages = response.getPages();
+                response -> SwingUtilities.invokeLater(() -> {
+                    currentPage = response.getPage();
+                    totalPages = response.getPages();
 
-                List<String[]> rows = new ArrayList<>();
-                for (LeaderboardEntry entry : response.getLeaderboard()) {
-                    rows.add(new String[]{
-                        String.valueOf(entry.getRank()),
-                        entry.getRsn(),
-                        String.format("%,d", entry.getTotalPoints())
-                    });
-                }
-                table.setData(rows);
+                    List<String[]> rows = new ArrayList<>();
+                    for (LeaderboardEntry entry : response.getLeaderboard()) {
+                        rows.add(new String[]{
+                                String.valueOf(entry.getRank()),
+                                entry.getRsn(),
+                                String.format("%,d", entry.getTotalPoints())
+                        });
+                    }
+                    table.setData(rows);
 
-                pageLabel.setText(currentPage + " / " + totalPages);
-                prevButton.setEnabled(currentPage > 1);
-                nextButton.setEnabled(currentPage < totalPages);
-            }),
-            error -> SwingUtilities.invokeLater(() ->
-                table.setData(null)
-            )
+                    pageLabel.setText(currentPage + " / " + totalPages);
+                    prevButton.setEnabled(currentPage > 1);
+                    nextButton.setEnabled(currentPage < totalPages);
+                }),
+                error -> SwingUtilities.invokeLater(() ->
+                        table.setData(null)
+                )
         );
     }
 

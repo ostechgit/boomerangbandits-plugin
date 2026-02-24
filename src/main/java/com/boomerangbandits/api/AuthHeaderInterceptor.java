@@ -1,21 +1,22 @@
 package com.boomerangbandits.api;
 
-import java.io.IOException;
-import javax.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.Interceptor;
 import okhttp3.Request;
 import okhttp3.Response;
 
+import javax.inject.Singleton;
+import java.io.IOException;
+
 /**
  * OkHttp interceptor that injects auth headers on every outgoing request
  * to the Boomerang Bandits backend.
- *
+ * <p>
  * Headers injected (when set):
- *   X-Member-Code  — identifies the member
- *   X-Auth-Token   — HMAC-SHA256(memberCode, accountHash), proves ownership
- *   X-Account-Hash — current OSRS account hash, required for alt-account support
- *
+ * X-Member-Code  — identifies the member
+ * X-Auth-Token   — HMAC-SHA256(memberCode, accountHash), proves ownership
+ * X-Account-Hash — current OSRS account hash, required for alt-account support
+ * <p>
  * Call {@link #setCredentials} after successful authentication and
  * {@link #clearCredentials} on logout.
  */

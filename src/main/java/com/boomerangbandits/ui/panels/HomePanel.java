@@ -3,7 +3,6 @@ package com.boomerangbandits.ui.panels;
 import com.boomerangbandits.BoomerangBanditsConfig;
 import com.boomerangbandits.api.WomApiService;
 import com.boomerangbandits.api.models.DailyXpResponse;
-import com.boomerangbandits.api.models.PlayerChallenge;
 import com.boomerangbandits.api.models.PlayerProfile;
 import com.boomerangbandits.api.models.WomCompetition;
 import com.boomerangbandits.ui.UIConstants;
@@ -11,43 +10,38 @@ import com.boomerangbandits.ui.components.AntialiasedLabel;
 import com.boomerangbandits.ui.components.Badge;
 import com.boomerangbandits.ui.components.CountdownLabel;
 import com.boomerangbandits.util.RefreshThrottler;
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.FlowLayout;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.Insets;
-import java.util.List;
-import javax.inject.Inject;
-import javax.swing.BorderFactory;
-import javax.swing.Box;
-import javax.swing.BoxLayout;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JTextArea;
-import javax.swing.SwingUtilities;
-import javax.swing.border.EmptyBorder;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Client;
 import net.runelite.client.ui.ColorScheme;
 
+import javax.inject.Inject;
+import javax.swing.*;
+import javax.swing.border.EmptyBorder;
+import java.awt.*;
+import java.util.List;
+
 /**
  * Home/overview panel — the default panel shown when opening the plugin sidebar.
- *
+ * <p>
  * Displays:
- *   - Player greeting
- *   - Connection status
- *   - Announcement (from remote config, if any)
- *   - Active competition summary (from WOM cache)
+ * - Player greeting
+ * - Connection status
+ * - Announcement (from remote config, if any)
+ * - Active competition summary (from WOM cache)
  */
 @Slf4j
 public class HomePanel extends JPanel {
 
+    // Throttle each section independently
+    private static final long REFRESH_COOLDOWN_MS = 60 * 60 * 1_000; // 1 hour
     private final Client client;
     private final BoomerangBanditsConfig config;
     private final WomApiService womApi;
     private final com.boomerangbandits.api.ClanApiService clanApi;
-
+    private final RefreshThrottler competitionThrottler = new RefreshThrottler(REFRESH_COOLDOWN_MS);
+    private final RefreshThrottler clanActivityThrottler = new RefreshThrottler(REFRESH_COOLDOWN_MS);
+    private final RefreshThrottler profileThrottler = new RefreshThrottler(30_000); // 30 seconds
+    private final RefreshThrottler challengeThrottler = new RefreshThrottler(REFRESH_COOLDOWN_MS);
     private JLabel greetingLabel;
     private JLabel clanPointsLabel;
     private Badge rankBadge;
@@ -60,16 +54,8 @@ public class HomePanel extends JPanel {
     private JTextArea challengeText;
     private JLabel challengeStreakLabel;
     private JLabel challengeStatsLabel;
-
     // Local data storage
     private WomCompetition activeCompetition;
-
-    // Throttle each section independently
-    private static final long REFRESH_COOLDOWN_MS = 60 * 60 * 1_000; // 1 hour
-    private final RefreshThrottler competitionThrottler  = new RefreshThrottler(REFRESH_COOLDOWN_MS);
-    private final RefreshThrottler clanActivityThrottler = new RefreshThrottler(REFRESH_COOLDOWN_MS);
-    private final RefreshThrottler profileThrottler      = new RefreshThrottler(30_000); // 30 seconds
-    private final RefreshThrottler challengeThrottler    = new RefreshThrottler(REFRESH_COOLDOWN_MS);
 
     @Inject
     public HomePanel(Client client, BoomerangBanditsConfig config, WomApiService womApi,
@@ -82,10 +68,10 @@ public class HomePanel extends JPanel {
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
         setBackground(ColorScheme.DARK_GRAY_COLOR);
         setBorder(new EmptyBorder(
-            UIConstants.PADDING_STANDARD,
-            UIConstants.PADDING_STANDARD,
-            UIConstants.PADDING_STANDARD,
-            UIConstants.PADDING_STANDARD
+                UIConstants.PADDING_STANDARD,
+                UIConstants.PADDING_STANDARD,
+                UIConstants.PADDING_STANDARD,
+                UIConstants.PADDING_STANDARD
         ));
 
         buildGreetingSection();
@@ -99,9 +85,9 @@ public class HomePanel extends JPanel {
         greetingLabel = new JLabel("Welcome, Adventurer!");
         greetingLabel.setForeground(Color.WHITE);
         greetingLabel.setFont(UIConstants.deriveFont(
-            greetingLabel.getFont(),
-            UIConstants.FONT_SIZE_LARGE,
-            UIConstants.FONT_BOLD
+                greetingLabel.getFont(),
+                UIConstants.FONT_SIZE_LARGE,
+                UIConstants.FONT_BOLD
         ));
         greetingLabel.setAlignmentX(LEFT_ALIGNMENT);
         add(greetingLabel);
@@ -147,13 +133,13 @@ public class HomePanel extends JPanel {
         challengeSection.setLayout(new BoxLayout(challengeSection, BoxLayout.Y_AXIS));
         challengeSection.setBackground(ColorScheme.DARKER_GRAY_COLOR);
         challengeSection.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(new Color(0xE65100)), // orange border — stands out
-            new EmptyBorder(
-                UIConstants.PADDING_STANDARD,
-                UIConstants.PADDING_STANDARD,
-                UIConstants.PADDING_STANDARD,
-                UIConstants.PADDING_STANDARD
-            )
+                BorderFactory.createLineBorder(new Color(0xE65100)), // orange border — stands out
+                new EmptyBorder(
+                        UIConstants.PADDING_STANDARD,
+                        UIConstants.PADDING_STANDARD,
+                        UIConstants.PADDING_STANDARD,
+                        UIConstants.PADDING_STANDARD
+                )
         ));
         challengeSection.setAlignmentX(LEFT_ALIGNMENT);
         challengeSection.setMaximumSize(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE));
@@ -166,7 +152,9 @@ public class HomePanel extends JPanel {
         headerRow.setMaximumSize(new Dimension(Integer.MAX_VALUE, 20));
 
         GridBagConstraints c = new GridBagConstraints();
-        c.gridx = 0; c.gridy = 0; c.weightx = 1.0;
+        c.gridx = 0;
+        c.gridy = 0;
+        c.weightx = 1.0;
         c.fill = GridBagConstraints.HORIZONTAL;
         c.anchor = GridBagConstraints.WEST;
         JLabel header = new AntialiasedLabel("Daily Challenge");
@@ -174,7 +162,8 @@ public class HomePanel extends JPanel {
         header.setFont(UIConstants.deriveFont(header.getFont(), UIConstants.FONT_SIZE_MEDIUM, UIConstants.FONT_BOLD));
         headerRow.add(header, c);
 
-        c.gridx = 1; c.weightx = 0.0;
+        c.gridx = 1;
+        c.weightx = 0.0;
         c.fill = GridBagConstraints.NONE;
         c.anchor = GridBagConstraints.EAST;
         challengeStreakLabel = new AntialiasedLabel("Streak: --");
@@ -217,13 +206,13 @@ public class HomePanel extends JPanel {
         clanActivitySection.setLayout(new BoxLayout(clanActivitySection, BoxLayout.Y_AXIS));
         clanActivitySection.setBackground(ColorScheme.DARKER_GRAY_COLOR);
         clanActivitySection.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(ColorScheme.MEDIUM_GRAY_COLOR),
-            new EmptyBorder(
-                UIConstants.PADDING_STANDARD,
-                UIConstants.PADDING_STANDARD,
-                UIConstants.PADDING_STANDARD,
-                UIConstants.PADDING_STANDARD
-            )
+                BorderFactory.createLineBorder(ColorScheme.MEDIUM_GRAY_COLOR),
+                new EmptyBorder(
+                        UIConstants.PADDING_STANDARD,
+                        UIConstants.PADDING_STANDARD,
+                        UIConstants.PADDING_STANDARD,
+                        UIConstants.PADDING_STANDARD
+                )
         ));
         clanActivitySection.setAlignmentX(LEFT_ALIGNMENT);
         clanActivitySection.setMaximumSize(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE));
@@ -246,13 +235,13 @@ public class HomePanel extends JPanel {
         competitionSection.setLayout(new BoxLayout(competitionSection, BoxLayout.Y_AXIS));
         competitionSection.setBackground(ColorScheme.DARKER_GRAY_COLOR);
         competitionSection.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(ColorScheme.MEDIUM_GRAY_COLOR),
-            new EmptyBorder(
-                UIConstants.PADDING_STANDARD,
-                UIConstants.PADDING_STANDARD,
-                UIConstants.PADDING_STANDARD,
-                UIConstants.PADDING_STANDARD
-            )
+                BorderFactory.createLineBorder(ColorScheme.MEDIUM_GRAY_COLOR),
+                new EmptyBorder(
+                        UIConstants.PADDING_STANDARD,
+                        UIConstants.PADDING_STANDARD,
+                        UIConstants.PADDING_STANDARD,
+                        UIConstants.PADDING_STANDARD
+                )
         ));
         competitionSection.setAlignmentX(LEFT_ALIGNMENT);
         competitionSection.setMaximumSize(new java.awt.Dimension(Integer.MAX_VALUE, 100));
@@ -306,8 +295,9 @@ public class HomePanel extends JPanel {
 
     /**
      * Update connection status display.
+     *
      * @param status "Connected", "Degraded", or "Not authenticated"
-     * @param color status colour
+     * @param color  status colour
      */
     public void updateStatus(String status, Color color) {
         SwingUtilities.invokeLater(() -> {
@@ -347,11 +337,11 @@ public class HomePanel extends JPanel {
         }
         challengeThrottler.recordRefresh();
         clanApi.fetchPlayerChallenge(
-            challenge -> SwingUtilities.invokeLater(() -> updateChallengeSection(challenge)),
-            error -> {
-                log.debug("[HomePanel] Could not fetch player challenge: {}", error);
-                SwingUtilities.invokeLater(() -> challengeSection.setVisible(false));
-            }
+                challenge -> SwingUtilities.invokeLater(() -> updateChallengeSection(challenge)),
+                error -> {
+                    log.debug("[HomePanel] Could not fetch player challenge: {}", error);
+                    SwingUtilities.invokeLater(() -> challengeSection.setVisible(false));
+                }
         );
     }
 
@@ -373,8 +363,8 @@ public class HomePanel extends JPanel {
         challengeStreakLabel.setText(streak > 1 ? "Streak: " + streak : "");
 
         challengeStatsLabel.setText(
-            "Completed " + challenge.getNumberCompleted() + " of " + challenge.getNumberReceived()
-            + (challenge.isRerolledToday() ? "  (rerolled)" : "")
+                "Completed " + challenge.getNumberCompleted() + " of " + challenge.getNumberReceived()
+                        + (challenge.isRerolledToday() ? "  (rerolled)" : "")
         );
 
         challengeSection.setVisible(true);
@@ -393,29 +383,29 @@ public class HomePanel extends JPanel {
         }
         competitionThrottler.recordRefresh();
         womApi.fetchCompetitions(
-            competitions -> {
-                // Find active competition
-                WomCompetition active = null;
-                for (WomCompetition comp : competitions) {
-                    if (comp.isOngoing()) {
-                        active = comp;
-                        break;
+                competitions -> {
+                    // Find active competition
+                    WomCompetition active = null;
+                    for (WomCompetition comp : competitions) {
+                        if (comp.isOngoing()) {
+                            active = comp;
+                            break;
+                        }
                     }
-                }
-                this.activeCompetition = active;
-                
-                WomCompetition finalActive = active;
-                SwingUtilities.invokeLater(() -> {
-                    if (finalActive != null) {
-                        competitionSection.setVisible(true);
-                        competitionCountdown.setTarget(finalActive.getEndsAt());
-                    } else {
-                        competitionSection.setVisible(false);
-                        competitionCountdown.stop();
-                    }
-                });
-            },
-            error -> log.error("Failed to fetch competitions for home panel", error)
+                    this.activeCompetition = active;
+
+                    WomCompetition finalActive = active;
+                    SwingUtilities.invokeLater(() -> {
+                        if (finalActive != null) {
+                            competitionSection.setVisible(true);
+                            competitionCountdown.setTarget(finalActive.getEndsAt());
+                        } else {
+                            competitionSection.setVisible(false);
+                            competitionCountdown.stop();
+                        }
+                    });
+                },
+                error -> log.error("Failed to fetch competitions for home panel", error)
         );
     }
 
@@ -430,15 +420,15 @@ public class HomePanel extends JPanel {
         }
         clanActivityThrottler.recordRefresh();
         clanApi.fetchDailyXp(
-            response -> SwingUtilities.invokeLater(() -> {
-                if (response != null && response.isSuccess()) {
-                    updateClanActivity(response);
-                    clanActivitySection.setVisible(true);
-                } else {
-                    clanActivitySection.setVisible(false);
-                }
-            }),
-            error -> log.error("Failed to fetch daily XP summary: {}", error)
+                response -> SwingUtilities.invokeLater(() -> {
+                    if (response != null && response.isSuccess()) {
+                        updateClanActivity(response);
+                        clanActivitySection.setVisible(true);
+                    } else {
+                        clanActivitySection.setVisible(false);
+                    }
+                }),
+                error -> log.error("Failed to fetch daily XP summary: {}", error)
         );
     }
 
@@ -452,8 +442,8 @@ public class HomePanel extends JPanel {
         }
         profileThrottler.recordRefresh();
         clanApi.fetchPlayerProfile(
-            profile -> SwingUtilities.invokeLater(() -> updateProfileRow(profile)),
-            error -> log.debug("[HomePanel] Could not fetch player profile for greeting: {}", error)
+                profile -> SwingUtilities.invokeLater(() -> updateProfileRow(profile)),
+                error -> log.debug("[HomePanel] Could not fetch player profile for greeting: {}", error)
         );
     }
 
@@ -470,16 +460,26 @@ public class HomePanel extends JPanel {
     private Color getRankColor(String rank) {
         if (rank == null) return ColorScheme.MEDIUM_GRAY_COLOR;
         switch (rank.toLowerCase()) {
-            case "owner":        return new Color(0xE91E63);
-            case "deputy owner": return new Color(0x9C27B0);
-            case "admin":        return new Color(0x4CAF50);
-            case "general":      return new Color(0x2196F3);
-            case "captain":      return new Color(0x03A9F4);
-            case "lieutenant":   return new Color(0x00BCD4);
-            case "sergeant":     return new Color(0x009688);
-            case "corporal":     return new Color(0x8BC34A);
-            case "recruit":      return ColorScheme.LIGHT_GRAY_COLOR;
-            default:             return ColorScheme.MEDIUM_GRAY_COLOR;
+            case "owner":
+                return new Color(0xE91E63);
+            case "deputy owner":
+                return new Color(0x9C27B0);
+            case "admin":
+                return new Color(0x4CAF50);
+            case "general":
+                return new Color(0x2196F3);
+            case "captain":
+                return new Color(0x03A9F4);
+            case "lieutenant":
+                return new Color(0x00BCD4);
+            case "sergeant":
+                return new Color(0x009688);
+            case "corporal":
+                return new Color(0x8BC34A);
+            case "recruit":
+                return ColorScheme.LIGHT_GRAY_COLOR;
+            default:
+                return ColorScheme.MEDIUM_GRAY_COLOR;
         }
     }
 
