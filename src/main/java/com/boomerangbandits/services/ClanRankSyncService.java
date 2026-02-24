@@ -43,8 +43,7 @@ import java.util.function.Consumer;
  * 
  * Implementation follows WiseOldMan's approach:
  * - Uses ClanSettings.getMembers() to get full roster (not just online)
- * - Checks custom titles first via titleForRank()
- * - Falls back to hardcoded mappings for standard ranks
+ * - Uses custom titles from ClanSettings.titleForRank() for rank names
  */
 @Slf4j
 @Singleton
@@ -64,44 +63,6 @@ public class ClanRankSyncService {
     private ScheduledFuture<?> periodicSyncTask;
     private ScheduledExecutorService executor;
     private final List<Long> recentRequestTimes = Collections.synchronizedList(new ArrayList<>());
-
-    /**
-     * Mapping of in-game rank values to canonical backend rank names.
-     * <p>
-     * NOTE: This is a FALLBACK mapping. The service will first try to use
-     * the actual custom title from ClanSettings.titleForRank(), which means
-     * if your clan has customized rank 124 to "Sheriff" instead of "Deputy Owner",
-     * it will correctly use "sheriff".
-     * <p>
-     * Only add mappings here for ranks that don't have custom titles in-game.
-     */
-    private static final Map<Integer, String> RANK_VALUE_TO_CANONICAL = new HashMap<>();
-    static {
-        // Standard ranks (these rarely have custom titles)
-        RANK_VALUE_TO_CANONICAL.put(0, "guest");
-        RANK_VALUE_TO_CANONICAL.put(100, "administrator");
-        RANK_VALUE_TO_CANONICAL.put(101, "organiser");
-        RANK_VALUE_TO_CANONICAL.put(102, "coordinator");
-        RANK_VALUE_TO_CANONICAL.put(103, "overseer");
-        RANK_VALUE_TO_CANONICAL.put(124, "deputy owner"); // Fallback if no custom title
-        RANK_VALUE_TO_CANONICAL.put(127, "owner");
-        
-        // Custom ranks - only add if they don't have titles in ClanSettings
-        // Run ::allranks to see your clan's actual rank structure
-        RANK_VALUE_TO_CANONICAL.put(10, "pure");
-        RANK_VALUE_TO_CANONICAL.put(20, "jade");
-        RANK_VALUE_TO_CANONICAL.put(30, "skulled");
-        RANK_VALUE_TO_CANONICAL.put(40, "tzkal");
-        RANK_VALUE_TO_CANONICAL.put(50, "maxed");
-        RANK_VALUE_TO_CANONICAL.put(60, "hero");
-        RANK_VALUE_TO_CANONICAL.put(70, "skiller");
-        RANK_VALUE_TO_CANONICAL.put(80, "emerald");
-        RANK_VALUE_TO_CANONICAL.put(85, "ruby");
-        RANK_VALUE_TO_CANONICAL.put(90, "diamond");
-        RANK_VALUE_TO_CANONICAL.put(95, "dragonstone");
-        RANK_VALUE_TO_CANONICAL.put(98, "onyx");
-        RANK_VALUE_TO_CANONICAL.put(99, "zenyte");
-    }
 
     /**
      * Start periodic rank syncing.
@@ -252,22 +213,14 @@ public class ClanRankSyncService {
     }
 
     /**
-     * Normalize a rank to canonical backend format.
+     * Normalize a rank to canonical backend format using the clan title name.
      */
     private String normalizeRank(int rankValue, ClanRank rank, ClanSettings clanSettings) {
-        // Try to get custom title from clan settings first
         ClanTitle title = clanSettings.titleForRank(rank);
         if (title != null && title.getName() != null && !title.getName().isEmpty()) {
-            // Normalize title to lowercase with spaces
             return title.getName().toLowerCase().replace("_", " ");
         }
-
-        // Fall back to hardcoded mapping if no custom title
-        if (RANK_VALUE_TO_CANONICAL.containsKey(rankValue)) {
-            return RANK_VALUE_TO_CANONICAL.get(rankValue);
-        }
-
-        // Unknown rank
+        log.debug("[RankSync] No title found for rank value {}", rankValue);
         return null;
     }
 

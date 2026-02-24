@@ -5,7 +5,6 @@ import com.boomerangbandits.ui.UIConstants;
 import com.boomerangbandits.ui.components.NavButton;
 import com.boomerangbandits.ui.components.PanelFooter;
 import com.boomerangbandits.ui.panels.AdminPanel;
-import com.boomerangbandits.ui.panels.BasePanel;
 import com.boomerangbandits.ui.panels.ClanHubPanel;
 import com.boomerangbandits.ui.panels.CompetitionPanel;
 import com.boomerangbandits.ui.panels.HomePanel;
@@ -274,9 +273,6 @@ public class BoomerangPanel extends PluginPanel {
     public void showCard(String card) {
         this.activeCard = card;
         
-        // Lazy initialize the panel before showing it
-        initializePanel(card);
-        
         cardLayout.show(contentPanel, card);
 
         // Update nav button active states
@@ -315,14 +311,6 @@ public class BoomerangPanel extends PluginPanel {
                 hubPanel.refresh();
                 break;
         }
-    }
-
-    /**
-     * Lazy initialize a panel if it extends BasePanel.
-     * This ensures the panel's UI is built before it's shown.
-     */
-    private void initializePanel(String card) {
-        // Future: migrate panels to BasePanel and add them here
     }
 
     /**

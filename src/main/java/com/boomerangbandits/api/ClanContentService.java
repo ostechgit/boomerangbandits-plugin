@@ -50,7 +50,7 @@ public class ClanContentService {
             onSuccess.accept(activeEventCache.getData());
             return;
         }
-        
+
         // Make API call
         Request request = new Request.Builder()
             .url(ApiConstants.BACKEND_BASE_URL + "/events/active")
@@ -111,36 +111,11 @@ public class ClanContentService {
             .delete()
             .build();
 
-        httpClient.newCall(request).enqueue(new Callback() {
-            @Override
-            public void onFailure(Call call, IOException e) {
-                log.warn("Failed to delete event", e);
-                onError.accept(e);
-            }
-
-            @Override
-            public void onResponse(Call call, Response response) throws IOException {
-                try (response) {
-                    if (!response.isSuccessful()) {
-                        onError.accept(new IOException("HTTP " + response.code()));
-                        return;
-                    }
-                    activeEventCache.invalidate();
-                    onSuccess.run();
-                } catch (Exception e) {
-                    onError.accept(e);
-                }
-            }
-        });
+        executeWrite(request, "delete event", onSuccess, onError);
     }
 
     /**
      * POST /api/events/active — create a new active event.
-     *
-     * @param memberCode authenticated member code (X-Member-Code header)
-     * @param payload    JSON string of the event request body
-     * @param onSuccess  called on HTTP 2xx
-     * @param onError    called with exception on failure
      */
     public void createEvent(
         String memberCode,
@@ -151,33 +126,10 @@ public class ClanContentService {
         Request request = new Request.Builder()
             .url(ApiConstants.BACKEND_BASE_URL + "/events/active")
             .header("X-Member-Code", memberCode)
-            .post(okhttp3.RequestBody.create(ApiConstants.JSON, payload))
+            .post(RequestBody.create(ApiConstants.JSON, payload))
             .build();
 
-        httpClient.newCall(request).enqueue(new Callback() {
-            @Override
-            public void onFailure(Call call, IOException e) {
-                log.warn("Failed to create event", e);
-                onError.accept(e);
-            }
-
-            @Override
-            public void onResponse(Call call, Response response) throws IOException {
-                try (response) {
-                    if (!response.isSuccessful()) {
-                        String errorBody = response.body() != null ? response.body().string() : "(no body)";
-                        log.warn("Create event failed HTTP {}: {}", response.code(), errorBody);
-                        onError.accept(new IOException("HTTP " + response.code() + ": " + errorBody));
-                        return;
-                    }
-                    activeEventCache.invalidate();
-                    onSuccess.run();
-                } catch (Exception e) {
-                    log.error("Error handling create event response", e);
-                    onError.accept(e);
-                }
-            }
-        });
+        executeWrite(request, "create event", onSuccess, onError);
     }
 
     /**
@@ -193,13 +145,22 @@ public class ClanContentService {
         Request request = new Request.Builder()
             .url(ApiConstants.BACKEND_BASE_URL + "/events/active/" + eventId)
             .header("X-Member-Code", memberCode)
-            .patch(okhttp3.RequestBody.create(ApiConstants.JSON, payload))
+            .patch(RequestBody.create(ApiConstants.JSON, payload))
             .build();
 
+        executeWrite(request, "patch event", onSuccess, onError);
+    }
+
+    /**
+     * Shared async executor for write operations (create/update/delete).
+     * Invalidates the active event cache on success.
+     */
+    private void executeWrite(Request request, String operation,
+                              Runnable onSuccess, Consumer<Exception> onError) {
         httpClient.newCall(request).enqueue(new Callback() {
             @Override
             public void onFailure(Call call, IOException e) {
-                log.warn("Failed to patch event", e);
+                log.warn("Failed to {}", operation, e);
                 onError.accept(e);
             }
 
@@ -208,14 +169,14 @@ public class ClanContentService {
                 try (response) {
                     if (!response.isSuccessful()) {
                         String errorBody = response.body() != null ? response.body().string() : "(no body)";
-                        log.warn("Patch event failed HTTP {}: {}", response.code(), errorBody);
+                        log.warn("{} failed HTTP {}: {}", operation, response.code(), errorBody);
                         onError.accept(new IOException("HTTP " + response.code() + ": " + errorBody));
                         return;
                     }
                     activeEventCache.invalidate();
                     onSuccess.run();
                 } catch (Exception e) {
-                    log.error("Error handling patch event response", e);
+                    log.error("Error handling {} response", operation, e);
                     onError.accept(e);
                 }
             }

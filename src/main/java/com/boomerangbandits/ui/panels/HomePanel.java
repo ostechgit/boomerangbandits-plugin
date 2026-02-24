@@ -524,7 +524,7 @@ public class HomePanel extends JPanel {
 
             for (DailyXpResponse.TopSkill skill : topSkills) {
                 // metric is e.g. "slayer_xp" — strip "_xp" suffix and capitalize
-                String displayName = capitalize(skill.getMetric().replaceAll("_xp$", ""));
+                String displayName = UIConstants.capitalize(skill.getMetric().replaceAll("_xp$", ""));
                 addStatRow(skill.getRank() + ". " + displayName, formatXP(skill.getGained()), clanActivitySection);
             }
         }
@@ -572,12 +572,5 @@ public class HomePanel extends JPanel {
         } else {
             return String.valueOf(xp);
         }
-    }
-
-    private String capitalize(String str) {
-        if (str == null || str.isEmpty()) {
-            return str;
-        }
-        return str.substring(0, 1).toUpperCase() + str.substring(1);
     }
 }

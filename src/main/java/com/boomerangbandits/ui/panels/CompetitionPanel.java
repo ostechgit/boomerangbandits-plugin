@@ -25,6 +25,7 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 import javax.inject.Inject;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
@@ -83,6 +84,52 @@ public class CompetitionPanel extends JPanel {
     private JLabel formStatus;
 
     private final RefreshThrottler refreshThrottler;
+
+    /** Validated event form fields (world + time range). */
+    private static class EventTimeValidation {
+        final int world;
+        final Instant startUtc;
+        final Instant endUtc;
+
+        EventTimeValidation(int world, Instant startUtc, Instant endUtc) {
+            this.world = world;
+            this.startUtc = startUtc;
+            this.endUtc = endUtc;
+        }
+    }
+
+    /**
+     * Validate world number and start/end date strings.
+     *
+     * @return validated result, or null if validation failed (error already shown via errorHandler)
+     */
+    private static EventTimeValidation validateWorldAndDates(
+            String worldStr, String startStr, String endStr, Consumer<String> errorHandler) {
+        int world;
+        try {
+            world = Integer.parseInt(worldStr);
+            if (world < 1 || world > 999) throw new NumberFormatException();
+        } catch (NumberFormatException e) {
+            errorHandler.accept("World must be 1-999");
+            return null;
+        }
+
+        Instant startUtc, endUtc;
+        try {
+            startUtc = LocalDateTime.parse(startStr, INPUT_FMT).atZone(SYDNEY).toInstant();
+            endUtc = LocalDateTime.parse(endStr, INPUT_FMT).atZone(SYDNEY).toInstant();
+        } catch (DateTimeParseException e) {
+            errorHandler.accept("Use format: dd/MM/yyyy HH:mm");
+            return null;
+        }
+
+        if (!endUtc.isAfter(startUtc)) {
+            errorHandler.accept("End must be after start");
+            return null;
+        }
+
+        return new EventTimeValidation(world, startUtc, endUtc);
+    }
 
     @Inject
     public CompetitionPanel(WomApiService womApi, ClanContentService contentService,
@@ -290,28 +337,9 @@ public class CompetitionPanel extends JPanel {
             return;
         }
 
-        int world;
-        try {
-            world = Integer.parseInt(worldStr);
-            if (world < 1 || world > 999) throw new NumberFormatException();
-        } catch (NumberFormatException e) {
-            setFormStatus("World must be 1-999", Color.RED);
-            return;
-        }
-
-        Instant startUtc, endUtc;
-        try {
-            startUtc = LocalDateTime.parse(startStr, INPUT_FMT).atZone(SYDNEY).toInstant();
-            endUtc = LocalDateTime.parse(endStr, INPUT_FMT).atZone(SYDNEY).toInstant();
-        } catch (DateTimeParseException e) {
-            setFormStatus("Use format: dd/MM/yyyy HH:mm", Color.RED);
-            return;
-        }
-
-        if (!endUtc.isAfter(startUtc)) {
-            setFormStatus("End must be after start", Color.RED);
-            return;
-        }
+        EventTimeValidation v = validateWorldAndDates(worldStr, startStr, endStr,
+            msg -> setFormStatus(msg, Color.RED));
+        if (v == null) return;
 
         String rsn = client.getLocalPlayer() != null ? client.getLocalPlayer().getName() : "";
 
@@ -320,10 +348,10 @@ public class CompetitionPanel extends JPanel {
         body.addProperty("eventType", (String) fieldEventType.getSelectedItem());
         body.addProperty("description", description);
         body.addProperty("location", location);
-        body.addProperty("world", world);
+        body.addProperty("world", v.world);
         body.addProperty("organiserRsn", rsn);
-        body.addProperty("startTime", startUtc.toString());
-        body.addProperty("endTime", endUtc.toString());
+        body.addProperty("startTime", v.startUtc.toString());
+        body.addProperty("endTime", v.endUtc.toString());
         if (!password.isEmpty()) body.addProperty("eventPassword", password);
         if (!challengePw.isEmpty()) body.addProperty("challengePassword", challengePw);
 
@@ -511,7 +539,7 @@ public class CompetitionPanel extends JPanel {
 
         String statusText = comp.isOngoing() ? "Ongoing" : "Upcoming";
         Color statusColor = comp.isOngoing() ? new Color(0x4CAF50) : new Color(0xFFC107);
-        JLabel status = new JLabel(statusText + " | " + capitalise(comp.getMetric()));
+        JLabel status = new JLabel(statusText + " | " + UIConstants.capitalizeLower(comp.getMetric()));
         status.setForeground(statusColor);
         status.setFont(UIConstants.deriveFont(status.getFont(), UIConstants.FONT_SIZE_SMALL));
         c.gridx = 0; c.gridy = 1; c.gridheight = 1; c.weightx = 1.0;
@@ -541,7 +569,7 @@ public class CompetitionPanel extends JPanel {
         womApi.fetchCompetitionDetails(competitionId,
             comp -> SwingUtilities.invokeLater(() -> {
                 detailTitle.setText(comp.getTitle());
-                detailMetric.setText("Metric: " + capitalise(comp.getMetric()));
+                detailMetric.setText("Metric: " + UIConstants.capitalizeLower(comp.getMetric()));
                 if (comp.isOngoing()) {
                     detailCountdown.setTarget(comp.getEndsAt());
                 } else {
@@ -627,7 +655,7 @@ public class CompetitionPanel extends JPanel {
 
         // Type badge — col 1
         if (event.getEventType() != null && !event.getEventType().isEmpty()) {
-            JLabel typeLabel = new JLabel(capitalise(event.getEventType()));
+            JLabel typeLabel = new JLabel(UIConstants.capitalizeLower(event.getEventType()));
             typeLabel.setForeground(new Color(0x2196F3));
             typeLabel.setFont(UIConstants.deriveFont(typeLabel.getFont(), UIConstants.FONT_SIZE_SMALL, UIConstants.FONT_BOLD));
             typeLabel.setBorder(BorderFactory.createCompoundBorder(
@@ -805,27 +833,9 @@ public class CompetitionPanel extends JPanel {
             return;
         }
 
-        int world;
-        try {
-            world = Integer.parseInt(worldStr);
-            if (world < 1 || world > 999) throw new NumberFormatException();
-        } catch (NumberFormatException ex) {
-            javax.swing.JOptionPane.showMessageDialog(this, "World must be 1-999.");
-            return;
-        }
-
-        Instant startUtc, endUtc;
-        try {
-            startUtc = LocalDateTime.parse(startStr, INPUT_FMT).atZone(SYDNEY).toInstant();
-            endUtc   = LocalDateTime.parse(endStr,   INPUT_FMT).atZone(SYDNEY).toInstant();
-        } catch (DateTimeParseException ex) {
-            javax.swing.JOptionPane.showMessageDialog(this, "Use format: dd/MM/yyyy HH:mm");
-            return;
-        }
-        if (!endUtc.isAfter(startUtc)) {
-            javax.swing.JOptionPane.showMessageDialog(this, "End must be after start.");
-            return;
-        }
+        EventTimeValidation v = validateWorldAndDates(worldStr, startStr, endStr,
+            msg -> javax.swing.JOptionPane.showMessageDialog(this, msg));
+        if (v == null) return;
 
         // Build patch body — passwords sent as null if cleared
         JsonObject body = new JsonObject();
@@ -834,10 +844,10 @@ public class CompetitionPanel extends JPanel {
         String desc = fDesc.getText().trim();
         if (!desc.isEmpty()) body.addProperty("description", desc);
         body.addProperty("location", fLocation.getText().trim());
-        body.addProperty("world", world);
+        body.addProperty("world", v.world);
         body.addProperty("organiserRsn", event.getOrganiserRsn());
-        body.addProperty("startTime", startUtc.toString());
-        body.addProperty("endTime", endUtc.toString());
+        body.addProperty("startTime", v.startUtc.toString());
+        body.addProperty("endTime", v.endUtc.toString());
         body.addProperty("isActive", true);
         String pw = fPassword.getText().trim();
         body.addProperty("eventPassword", pw.isEmpty() ? null : pw);
@@ -855,10 +865,5 @@ public class CompetitionPanel extends JPanel {
         JLabel label = new JLabel(text);
         label.setForeground(color);
         return label;
-    }
-
-    private static String capitalise(String s) {
-        if (s == null || s.isEmpty()) return s;
-        return s.substring(0, 1).toUpperCase() + s.substring(1).toLowerCase();
     }
 }

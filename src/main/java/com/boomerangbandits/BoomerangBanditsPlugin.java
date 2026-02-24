@@ -544,7 +544,6 @@ public class BoomerangBanditsPlugin extends Plugin {
     // ======================================================================
 
     private void registerNotifiers() {
-        // LoginNotifier and LogoutNotifier are called directly by the plugin, not via EventBus
         eventBus.register(cofferDepositSoundService);
     }
 
