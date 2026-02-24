@@ -18,11 +18,7 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -30,7 +26,7 @@ import java.util.function.Consumer;
 
 /**
  * Service for syncing clan member ranks to the backend.
- * 
+ * <p>
  * Features:
  * - Collects ranks from ALL clan members (including offline) using ClanSettings
  * - Normalizes rank names to canonical backend values
@@ -40,7 +36,7 @@ import java.util.function.Consumer;
  * - Periodic sync (configurable interval)
  * - Manual sync on demand
  * - Detailed logging of rank distribution
- * 
+ * <p>
  * Implementation follows WiseOldMan's approach:
  * - Uses ClanSettings.getMembers() to get full roster (not just online)
  * - Uses custom titles from ClanSettings.titleForRank() for rank names
@@ -53,16 +49,19 @@ public class ClanRankSyncService {
     private static final int RATE_LIMIT_REQUESTS = 3;
     private static final long RATE_LIMIT_WINDOW_MS = 60_000; // 1 minute
     private static final int DEFAULT_SYNC_INTERVAL_MINUTES = 30;
-
-    @Inject private Client client;
-    @Inject private ClientThread clientThread;
-    @Inject private BoomerangBanditsConfig config;
-    @Inject private @Named("boomerang") OkHttpClient httpClient;
-    @Inject private Gson gson;
-
+    private final List<Long> recentRequestTimes = Collections.synchronizedList(new ArrayList<>());
+    @Inject
+    private Client client;
+    @Inject
+    private ClientThread clientThread;
+    @Inject
+    private BoomerangBanditsConfig config;
+    @Inject
+    private @Named("boomerang") OkHttpClient httpClient;
+    @Inject
+    private Gson gson;
     private ScheduledFuture<?> periodicSyncTask;
     private ScheduledExecutorService executor;
-    private final List<Long> recentRequestTimes = Collections.synchronizedList(new ArrayList<>());
 
     /**
      * Start periodic rank syncing.
@@ -76,10 +75,10 @@ public class ClanRankSyncService {
         log.info("Starting clan rank sync service (interval: {} minutes)", DEFAULT_SYNC_INTERVAL_MINUTES);
 
         periodicSyncTask = executor.scheduleAtFixedRate(
-            this::syncRanksAsync,
-            5, // Initial delay (minutes)
-            DEFAULT_SYNC_INTERVAL_MINUTES,
-            TimeUnit.MINUTES
+                this::syncRanksAsync,
+                5, // Initial delay (minutes)
+                DEFAULT_SYNC_INTERVAL_MINUTES,
+                TimeUnit.MINUTES
         );
     }
 
@@ -108,11 +107,11 @@ public class ClanRankSyncService {
      */
     private void syncRanksAsync() {
         syncRanks(
-            response -> log.info("Rank sync complete: {} synced, {} updated, {} unchanged, {} created, {} not found",
-                response.getSynced(), response.getUpdated(), response.getUnchanged(),
-                response.getCreated(),
-                response.getNotFound() != null ? response.getNotFound().size() : 0),
-            error -> log.warn("Rank sync failed", error)
+                response -> log.info("Rank sync complete: {} synced, {} updated, {} unchanged, {} created, {} not found",
+                        response.getSynced(), response.getUpdated(), response.getUnchanged(),
+                        response.getCreated(),
+                        response.getNotFound() != null ? response.getNotFound().size() : 0),
+                error -> log.warn("Rank sync failed", error)
         );
     }
 
@@ -134,17 +133,17 @@ public class ClanRankSyncService {
         clientThread.invoke(() -> {
             try {
                 List<RankSyncRequest.RankUpdate> updates = collectRankUpdates();
-                
+
                 if (updates.isEmpty()) {
                     log.debug("No rank updates to sync");
                     return;
                 }
 
                 log.info("Collected {} rank updates, sending to backend", updates.size());
-                
+
                 // Send to backend via executor (off client thread)
                 executor.submit(() -> sendRankUpdates(updates, onSuccess, onError));
-                
+
             } catch (Exception e) {
                 log.error("Error collecting rank updates", e);
                 onError.accept(e);
@@ -155,7 +154,7 @@ public class ClanRankSyncService {
     /**
      * Collect rank updates from in-game clan roster.
      * MUST be called on client thread.
-     * 
+     * <p>
      * Uses ClanSettings.getMembers() to get ALL clan members (including offline),
      * not just online members from ClanChannel.
      */
@@ -169,11 +168,11 @@ public class ClanRankSyncService {
         }
 
         log.debug("[RankSync] Collecting ranks from clan: {}", clanSettings.getName());
-        
+
         // Use ClanSettings.getMembers() to get ALL members (including offline)
         // This is what WOM does - it syncs the entire clan roster, not just online members
         List<net.runelite.api.clan.ClanMember> allMembers = clanSettings.getMembers();
-        
+
         log.debug("[RankSync] Total clan members: {}", allMembers.size());
 
         // Track rank distribution for logging
@@ -181,23 +180,23 @@ public class ClanRankSyncService {
 
         for (net.runelite.api.clan.ClanMember member : allMembers) {
             String rsn = member.getName();
-            
+
             // Skip bot accounts (names starting with [#)
             if (rsn.startsWith("[#")) {
                 log.debug("[RankSync] Skipping bot account: {}", rsn);
                 continue;
             }
-            
+
             // Normalize RSN to Jagex format (spaces to underscores)
             // This matches WOM's approach and ensures consistent formatting
             String normalizedRsn = Text.toJagexName(rsn);
-            
+
             ClanRank rank = member.getRank();
             int rankValue = rank.getRank();
 
             // Normalize rank to canonical backend value
             String canonicalRank = normalizeRank(rankValue, rank, clanSettings);
-            
+
             if (canonicalRank != null) {
                 updates.add(new RankSyncRequest.RankUpdate(normalizedRsn, canonicalRank));
                 rankCounts.put(canonicalRank, rankCounts.getOrDefault(canonicalRank, 0) + 1);
@@ -228,23 +227,23 @@ public class ClanRankSyncService {
      * Send rank updates to backend.
      * Handles batching if needed.
      */
-    private void sendRankUpdates(List<RankSyncRequest.RankUpdate> updates, 
-                                  Consumer<RankSyncResponse> onSuccess, 
-                                  Consumer<Exception> onError) {
-        
+    private void sendRankUpdates(List<RankSyncRequest.RankUpdate> updates,
+                                 Consumer<RankSyncResponse> onSuccess,
+                                 Consumer<Exception> onError) {
+
         // Batch if needed
         if (updates.size() > MAX_BATCH_SIZE) {
             log.info("Batching {} updates into chunks of {}", updates.size(), MAX_BATCH_SIZE);
-            
+
             for (int i = 0; i < updates.size(); i += MAX_BATCH_SIZE) {
                 int end = Math.min(i + MAX_BATCH_SIZE, updates.size());
                 List<RankSyncRequest.RankUpdate> batch = updates.subList(i, end);
-                
-                log.info("Sending batch {}/{}", (i / MAX_BATCH_SIZE) + 1, 
-                    (updates.size() + MAX_BATCH_SIZE - 1) / MAX_BATCH_SIZE);
-                
+
+                log.info("Sending batch {}/{}", (i / MAX_BATCH_SIZE) + 1,
+                        (updates.size() + MAX_BATCH_SIZE - 1) / MAX_BATCH_SIZE);
+
                 sendBatch(batch, onSuccess, onError);
-                
+
                 // Small delay between batches to avoid rate limiting
                 if (end < updates.size()) {
                     try {
@@ -266,7 +265,7 @@ public class ClanRankSyncService {
     private void sendBatch(List<RankSyncRequest.RankUpdate> updates,
                            Consumer<RankSyncResponse> onSuccess,
                            Consumer<Exception> onError) {
-        
+
         RankSyncRequest request = new RankSyncRequest();
         request.setUpdates(updates);
         request.setCreateIfNotFound(true);
@@ -275,12 +274,12 @@ public class ClanRankSyncService {
         RequestBody body = RequestBody.create(ApiConstants.JSON, json);
 
         Request httpRequest = new Request.Builder()
-            .url(ApiConstants.BACKEND_BASE_URL + "/members/ranks/sync")
-            .post(body)
-            .addHeader("X-Member-Code", config.memberCode())
-            .addHeader("Content-Type", "application/json")
-            .addHeader("User-Agent", ApiConstants.USER_AGENT)
-            .build();
+                .url(ApiConstants.BACKEND_BASE_URL + "/members/ranks/sync")
+                .post(body)
+                .addHeader("X-Member-Code", config.memberCode())
+                .addHeader("Content-Type", "application/json")
+                .addHeader("User-Agent", ApiConstants.USER_AGENT)
+                .build();
 
         httpClient.newCall(httpRequest).enqueue(new Callback() {
             @Override
@@ -302,13 +301,13 @@ public class ClanRankSyncService {
                     assert response.body() != null;
                     String responseBody = response.body().string();
                     RankSyncResponse syncResponse = gson.fromJson(responseBody, RankSyncResponse.class);
-                    
+
                     // Single-line summary at INFO, details at debug
                     log.info("[RankSync] Done — synced:{} updated:{} unchanged:{} created:{}",
-                        syncResponse.getSynced(), syncResponse.getUpdated(),
-                        syncResponse.getUnchanged(), syncResponse.getCreated());
+                            syncResponse.getSynced(), syncResponse.getUpdated(),
+                            syncResponse.getUnchanged(), syncResponse.getCreated());
                     log.debug("[RankSync] Full response: {}", responseBody);
-                    
+
                     // Log not found members
                     if (syncResponse.getNotFound() != null && !syncResponse.getNotFound().isEmpty()) {
                         log.warn("[RankSync]   Not Found: {} members", syncResponse.getNotFound().size());
@@ -316,21 +315,21 @@ public class ClanRankSyncService {
                             log.warn("[RankSync]     - {}", rsn);
                         }
                     }
-                    
+
                     // Log invalid entries
                     if (syncResponse.getInvalid() > 0) {
                         log.error("[RankSync]   Invalid: {} entries", syncResponse.getInvalid());
                     }
-                    
+
                     // Log detailed errors
                     if (syncResponse.getErrors() != null && !syncResponse.getErrors().isEmpty()) {
                         log.error("[RankSync] Errors:");
                         for (RankSyncResponse.SyncError error : syncResponse.getErrors()) {
                             String indexStr = error.getIndex() != null ? String.valueOf(error.getIndex()) : "?";
-                            
+
                             // Prefer rsnInput (raw input) over rsn (normalized)
                             String displayName = error.getRsnInput() != null ? error.getRsnInput() : error.getRsn();
-                            
+
                             if (displayName != null) {
                                 log.error("[RankSync]   [{}] {} - {}", indexStr, displayName, error.getError());
                             } else {
@@ -338,9 +337,9 @@ public class ClanRankSyncService {
                             }
                         }
                     }
-                    
+
                     onSuccess.accept(syncResponse);
-                    
+
                 } catch (Exception e) {
                     log.error("Error parsing rank sync response", e);
                     onError.accept(e);
@@ -354,10 +353,10 @@ public class ClanRankSyncService {
      */
     private boolean checkRateLimit() {
         long now = System.currentTimeMillis();
-        
+
         // Remove old requests outside the window
         recentRequestTimes.removeIf(time -> now - time > RATE_LIMIT_WINDOW_MS);
-        
+
         // Check if we can make another request
         return recentRequestTimes.size() < RATE_LIMIT_REQUESTS;
     }

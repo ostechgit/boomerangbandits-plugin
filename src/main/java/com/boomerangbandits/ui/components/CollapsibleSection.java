@@ -1,6 +1,7 @@
 package com.boomerangbandits.ui.components;
 
 import com.boomerangbandits.ui.UIConstants;
+import lombok.Getter;
 import net.runelite.client.ui.ColorScheme;
 
 import javax.swing.*;
@@ -20,6 +21,7 @@ public class CollapsibleSection extends JPanel {
     private final JPanel contentPanel;
     private final JLabel arrowLabel;
     private final JPanel headerPanel;
+    @Getter
     private boolean expanded;
 
     public CollapsibleSection(String title, JPanel content, boolean startExpanded) {
@@ -39,10 +41,10 @@ public class CollapsibleSection extends JPanel {
         headerPanel = new JPanel(new BorderLayout(UIConstants.SPACING_SMALL, 0));
         headerPanel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
         headerPanel.setBorder(new EmptyBorder(
-            UIConstants.SPACING_SMALL,
-            UIConstants.PADDING_STANDARD,
-            UIConstants.SPACING_SMALL,
-            UIConstants.PADDING_STANDARD
+                UIConstants.SPACING_SMALL,
+                UIConstants.PADDING_STANDARD,
+                UIConstants.SPACING_SMALL,
+                UIConstants.PADDING_STANDARD
         ));
         headerPanel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         headerPanel.setAlignmentX(LEFT_ALIGNMENT);
@@ -88,10 +90,6 @@ public class CollapsibleSection extends JPanel {
         contentPanel.setVisible(expanded);
         revalidate();
         repaint();
-    }
-
-    public boolean isExpanded() {
-        return expanded;
     }
 
     @Override

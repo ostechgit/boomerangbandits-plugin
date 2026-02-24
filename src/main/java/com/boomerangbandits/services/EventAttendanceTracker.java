@@ -14,12 +14,6 @@ package com.boomerangbandits.services;
  */
 
 import com.boomerangbandits.api.models.AttendanceEntry;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Client;
@@ -27,30 +21,38 @@ import net.runelite.api.Player;
 import net.runelite.api.clan.ClanChannelMember;
 import net.runelite.client.util.Text;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
+
 /**
  * Tracks clan member attendance during an in-game event.
- *
+ * <p>
  * Usage:
- *   startEvent()  — call when admin starts the event
- *   stopEvent()   — call when admin stops; returns the attendance list
- *   onGameTick()  — call every game tick while running
- *   onPlayerSpawned/Despawned/ClanMemberJoined/Left — forward from plugin
+ * startEvent()  — call when admin starts the event
+ * stopEvent()   — call when admin stops; returns the attendance list
+ * onGameTick()  — call every game tick while running
+ * onPlayerSpawned/Despawned/ClanMemberJoined/Left — forward from plugin
  */
 @Slf4j
 @Singleton
 public class EventAttendanceTracker {
 
-    /** Minimum seconds a member must be present to count as "attended". */
+    /**
+     * Minimum seconds a member must be present to count as "attended".
+     */
     public static final int DEFAULT_PRESENT_THRESHOLD_SECONDS = 60 * 10; // 10 min
-    /** Seconds after event start before a member is considered "late". */
+    /**
+     * Seconds after event start before a member is considered "late".
+     */
     public static final int DEFAULT_LATE_THRESHOLD_SECONDS = 60 * 5;     // 5 min
-
-    @Inject
-    private Client client;
-
     // keyed by normalized (Jagex) lowercase name
     private final Map<String, MemberAttendance> buffer = new TreeMap<>();
-
+    @Inject
+    private Client client;
     @Getter
     private boolean running = false;
 
@@ -74,6 +76,7 @@ public class EventAttendanceTracker {
 
     /**
      * Stop the event and return the structured attendance list.
+     *
      * @param presentThresholdSeconds members below this are still included but flagged
      * @param lateThresholdSeconds    members who arrived after this are flagged as late
      */
@@ -92,21 +95,23 @@ public class EventAttendanceTracker {
             boolean late = secondsLate > lateThresholdSeconds;
             boolean meetsThreshold = secondsPresent >= presentThresholdSeconds;
             entries.add(new AttendanceEntry(
-                ma.playerName,
-                secondsPresent,
-                late ? secondsLate : 0,
-                meetsThreshold
+                    ma.playerName,
+                    secondsPresent,
+                    late ? secondsLate : 0,
+                    meetsThreshold
             ));
         }
 
         log.info("[Attendance] Event stopped. {} members tracked, {} meet threshold.",
-            entries.size(),
-            entries.stream().filter(AttendanceEntry::isMeetsThreshold).count());
+                entries.size(),
+                entries.stream().filter(AttendanceEntry::isMeetsThreshold).count());
 
         return entries;
     }
 
-    /** Convenience overload using defaults. */
+    /**
+     * Convenience overload using defaults.
+     */
     public List<AttendanceEntry> stopEvent() {
         return stopEvent(DEFAULT_PRESENT_THRESHOLD_SECONDS, DEFAULT_LATE_THRESHOLD_SECONDS);
     }
@@ -206,11 +211,11 @@ public class EventAttendanceTracker {
         String key = nameToKey(player.getName());
         if (!buffer.containsKey(key)) {
             MemberAttendance ma = new MemberAttendance(
-                player.getName(),
-                client.getTickCount() - eventStartTick, // ticksLate
-                client.getTickCount(),                   // tickActivityStarted
-                0,                                       // ticksTotal
-                false                                    // isPresent
+                    player.getName(),
+                    client.getTickCount() - eventStartTick, // ticksLate
+                    client.getTickCount(),                   // tickActivityStarted
+                    0,                                       // ticksTotal
+                    false                                    // isPresent
             );
             buffer.put(key, ma);
         }

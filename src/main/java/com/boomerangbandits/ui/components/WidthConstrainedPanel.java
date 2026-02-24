@@ -1,8 +1,7 @@
 package com.boomerangbandits.ui.components;
 
-import javax.swing.JPanel;
-import java.awt.Dimension;
-import java.awt.LayoutManager;
+import javax.swing.*;
+import java.awt.*;
 
 /**
  * A JPanel that overrides getPreferredSize() to never report a width wider

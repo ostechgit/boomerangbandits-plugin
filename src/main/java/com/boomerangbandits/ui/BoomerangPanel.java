@@ -1,44 +1,24 @@
 package com.boomerangbandits.ui;
 
 import com.boomerangbandits.BoomerangBanditsConfig;
-import com.boomerangbandits.ui.UIConstants;
 import com.boomerangbandits.ui.components.NavButton;
 import com.boomerangbandits.ui.components.PanelFooter;
-import com.boomerangbandits.ui.panels.AdminPanel;
-import com.boomerangbandits.ui.panels.ClanHubPanel;
-import com.boomerangbandits.ui.panels.CompetitionPanel;
-import com.boomerangbandits.ui.panels.HomePanel;
-import com.boomerangbandits.ui.panels.LeaderboardPanel;
+import com.boomerangbandits.ui.panels.*;
 import com.boomerangbandits.util.ClanValidator;
-import java.awt.BorderLayout;
-import java.awt.CardLayout;
-import java.awt.Color;
-import java.awt.Cursor;
-import java.awt.Dimension;
-import java.awt.FlowLayout;
-import java.util.ArrayList;
-import java.util.List;
-import javax.inject.Inject;
-import javax.swing.Box;
-import javax.swing.BoxLayout;
-import javax.swing.ImageIcon;
-import javax.swing.JButton;
-import javax.swing.JComponent;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.Scrollable;
-import javax.swing.ScrollPaneConstants;
-import javax.swing.SwingUtilities;
-import javax.swing.border.EmptyBorder;
-import javax.swing.border.MatteBorder;
-
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.PluginPanel;
 import net.runelite.client.util.ImageUtil;
+
+import javax.inject.Inject;
+import javax.swing.*;
+import javax.swing.border.EmptyBorder;
+import javax.swing.border.MatteBorder;
+import java.awt.*;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Main side panel with icon navigation bar and CardLayout content.
@@ -61,7 +41,7 @@ public class BoomerangPanel extends PluginPanel {
 
     /**
      * -- GETTER --
-     *  Get the home panel for direct updates (greeting, status, announcement).
+     * Get the home panel for direct updates (greeting, status, announcement).
      */
     @Getter
     private final HomePanel homePanel;
@@ -70,7 +50,7 @@ public class BoomerangPanel extends PluginPanel {
     private final ClanHubPanel hubPanel;
     /**
      * -- GETTER --
-     *  Get the admin panel for direct updates.
+     * Get the admin panel for direct updates.
      */
     @Getter
     private final AdminPanel adminPanel;
@@ -81,15 +61,15 @@ public class BoomerangPanel extends PluginPanel {
     private CardLayout cardLayout;
     private JPanel contentPanel;
     private JPanel navBar;
-    private List<NavButton> navButtons = new ArrayList<>();
+    private final List<NavButton> navButtons = new ArrayList<>();
     private JButton adminButton;
     /**
      * -- GETTER --
-     *  Get the active card identifier.
+     * Get the active card identifier.
      */
     @Getter
     private String activeCard = CARD_HOME;
-    private PanelFooter stickyFooter;
+    private final PanelFooter stickyFooter;
 
     @Inject
     public BoomerangPanel(
@@ -147,7 +127,7 @@ public class BoomerangPanel extends PluginPanel {
         adminButton = new JButton();
         try {
             adminButton.setIcon(new ImageIcon(ImageUtil.loadImageResource(
-                getClass(), "/com/boomerangbandits/profile-icon.png")));
+                    getClass(), "/com/boomerangbandits/profile-icon.png")));
         } catch (Exception e) {
             adminButton.setText("Admin");
         }
@@ -169,7 +149,7 @@ public class BoomerangPanel extends PluginPanel {
         ImageIcon icon;
         try {
             icon = new ImageIcon(ImageUtil.loadImageResource(getClass(),
-                "/com/boomerangbandits/" + iconFile));
+                    "/com/boomerangbandits/" + iconFile));
         } catch (Exception e) {
             // Fallback: use first letter as text if icon missing
             log.warn("Icon not found: {}, using placeholder", iconFile);
@@ -196,7 +176,9 @@ public class BoomerangPanel extends PluginPanel {
         add(contentPanel, BorderLayout.CENTER);
     }
 
-    /** Builds the locked/unauthenticated state panel. */
+    /**
+     * Builds the locked/unauthenticated state panel.
+     */
     private JPanel buildLockedPanel() {
         JPanel panel = new JPanel();
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
@@ -221,7 +203,7 @@ public class BoomerangPanel extends PluginPanel {
         panel.add(line1);
 
         panel.add(Box.createVerticalStrut(8));
-        
+
         JLabel line2 = new JLabel("Login and join CC");
         line2.setForeground(Color.WHITE);
         line2.setFont(UIConstants.deriveFont(line2.getFont(), UIConstants.FONT_SIZE_LARGE, UIConstants.FONT_BOLD));
@@ -241,7 +223,9 @@ public class BoomerangPanel extends PluginPanel {
         return panel;
     }
 
-    /** Wraps a panel in a vertical-only scroll pane that fills available width. */
+    /**
+     * Wraps a panel in a vertical-only scroll pane that fills available width.
+     */
     private JScrollPane scrollWrap(JPanel panel) {
         // If the panel implements Scrollable with getScrollableTracksViewportWidth()=true,
         // put it directly as the viewport view — the Scrollable contract handles width.
@@ -257,8 +241,8 @@ public class BoomerangPanel extends PluginPanel {
         }
 
         JScrollPane scroll = new JScrollPane(viewportView,
-            ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
-            ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+                ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
+                ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
         scroll.setBorder(null);
         scroll.getViewport().setBackground(ColorScheme.DARK_GRAY_COLOR);
         scroll.getVerticalScrollBar().setUnitIncrement(16);
@@ -272,7 +256,7 @@ public class BoomerangPanel extends PluginPanel {
      */
     public void showCard(String card) {
         this.activeCard = card;
-        
+
         cardLayout.show(contentPanel, card);
 
         // Update nav button active states
@@ -285,7 +269,7 @@ public class BoomerangPanel extends PluginPanel {
         if (adminButton != null) {
             adminButton.setOpaque(CARD_ADMIN.equals(card));
             adminButton.setBackground(CARD_ADMIN.equals(card)
-                ? ColorScheme.DARK_GRAY_COLOR : ColorScheme.DARKER_GRAY_COLOR);
+                    ? ColorScheme.DARK_GRAY_COLOR : ColorScheme.DARKER_GRAY_COLOR);
         }
 
         // Refresh the target panel's data
@@ -361,7 +345,9 @@ public class BoomerangPanel extends PluginPanel {
         homePanel.updateStatus("Not connected", ColorScheme.LIGHT_GRAY_COLOR);
     }
 
-    /** Show the locked screen — hides nav bar, footer, and all content panels. */
+    /**
+     * Show the locked screen — hides nav bar, footer, and all content panels.
+     */
     public void showLocked() {
         cardLayout.show(contentPanel, CARD_LOCKED);
         activeCard = CARD_LOCKED;
@@ -369,7 +355,9 @@ public class BoomerangPanel extends PluginPanel {
         if (stickyFooter != null) stickyFooter.setVisible(false);
     }
 
-    /** Unlock the panel — show nav bar, footer, and navigate to home. */
+    /**
+     * Unlock the panel — show nav bar, footer, and navigate to home.
+     */
     public void showUnlocked() {
         if (navBar != null) navBar.setVisible(true);
         if (stickyFooter != null) stickyFooter.setVisible(true);

@@ -8,13 +8,13 @@ import lombok.Data;
 @Data
 public class AuthResponse {
     private boolean success;
+    /**
+     * -- GETTER --
+     *  True when the backend registered the member but hasn't issued a code yet.
+     */
     private boolean pending;
     private String memberCode;
     private MemberProfile member;
     private String error;
 
-    /** True when the backend registered the member but hasn't issued a code yet. */
-    public boolean isPending() {
-        return pending;
-    }
 }

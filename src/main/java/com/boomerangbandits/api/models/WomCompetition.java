@@ -30,18 +30,19 @@ public class WomCompetition {
 
     /**
      * Calculate competition status based on current time.
+     *
      * @return "upcoming", "ongoing", or "finished"
      */
     public String getStatus() {
         if (startsAt == null || endsAt == null) {
             return "unknown";
         }
-        
+
         try {
             Instant now = Instant.now();
             Instant start = Instant.parse(startsAt);
             Instant end = Instant.parse(endsAt);
-            
+
             if (now.isBefore(start)) {
                 return "upcoming";
             } else if (now.isAfter(end)) {
@@ -54,14 +55,14 @@ public class WomCompetition {
         }
     }
 
-    public boolean isOngoing() { 
-        return "ongoing".equals(getStatus()); 
+    public boolean isOngoing() {
+        return "ongoing".equals(getStatus());
     }
-    
-    public boolean isUpcoming() { 
-        return "upcoming".equals(getStatus()); 
+
+    public boolean isUpcoming() {
+        return "upcoming".equals(getStatus());
     }
-    
+
     public boolean isFinished() {
         return "finished".equals(getStatus());
     }

@@ -1,6 +1,5 @@
 package com.boomerangbandits.util;
 
-import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 /**
@@ -8,15 +7,15 @@ import javax.annotation.Nullable;
  * Thread-safe for read after write (volatile fields).
  * <p>
  * Usage:
- *   CachedData<List<WomCompetition>> cache = new CachedData<>(5 * 60 * 1000L);
- *   if (cache.isFresh()) return cache.getData();
- *   // else fetch and call cache.update(newData);
+ * CachedData<List<WomCompetition>> cache = new CachedData<>(5 * 60 * 1000L);
+ * if (cache.isFresh()) return cache.getData();
+ * // else fetch and call cache.update(newData);
  */
 public class CachedData<T> {
+    private final long ttlMs;
     @Nullable
     private volatile T data;
     private volatile long lastUpdated;
-    private final long ttlMs;
 
     public CachedData(long ttlMs) {
         if (ttlMs <= 0) {

@@ -1,24 +1,24 @@
 package com.boomerangbandits.ui.components;
 
+import net.runelite.client.ui.ColorScheme;
+
+import javax.swing.*;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.format.DateTimeParseException;
-import javax.swing.JLabel;
-import javax.swing.Timer;
-import net.runelite.client.ui.ColorScheme;
 
 /**
  * A label that counts down to a target time.
  * Updates every second via Swing Timer.
  * <p>
  * Usage:
- *   CountdownLabel countdown = new CountdownLabel("Ends in: ");
- *   countdown.setTarget("2025-06-15T12:00:00Z");
- *   // Displays "Ends in: 3d 5h 12m"
+ * CountdownLabel countdown = new CountdownLabel("Ends in: ");
+ * countdown.setTarget("2025-06-15T12:00:00Z");
+ * // Displays "Ends in: 3d 5h 12m"
  */
 public class CountdownLabel extends JLabel {
 
-    private String prefix;
+    private final String prefix;
     private Instant targetTime;
     private Timer timer;
 

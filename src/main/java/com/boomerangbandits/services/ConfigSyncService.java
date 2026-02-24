@@ -3,23 +3,24 @@ package com.boomerangbandits.services;
 import com.boomerangbandits.BoomerangBanditsConfig;
 import com.boomerangbandits.api.ClanApiService;
 import com.boomerangbandits.api.models.PluginConfigResponse;
+import lombok.extern.slf4j.Slf4j;
+import net.runelite.client.config.ConfigManager;
+
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
-import javax.inject.Inject;
-import javax.inject.Singleton;
-import lombok.extern.slf4j.Slf4j;
-import net.runelite.client.config.ConfigManager;
 
 /**
  * Periodically polls the backend for remote plugin configuration.
  * <p>
  * Lifecycle:
- *   1. Plugin calls start() AFTER successful authentication
- *   2. Polls GET /api/plugin/config every configSyncInterval seconds
- *   3. Updates hidden config items in RuneLite's ConfigManager
- *   4. UI reacts to ConfigChanged events automatically
- *   5. Plugin calls stop() on shutdown
+ * 1. Plugin calls start() AFTER successful authentication
+ * 2. Polls GET /api/plugin/config every configSyncInterval seconds
+ * 3. Updates hidden config items in RuneLite's ConfigManager
+ * 4. UI reacts to ConfigChanged events automatically
+ * 5. Plugin calls stop() on shutdown
  * <p>
  * Does NOT start before authentication. The memberCode is required.
  */
@@ -27,9 +28,12 @@ import net.runelite.client.config.ConfigManager;
 @Singleton
 public class ConfigSyncService {
 
-    @Inject private ClanApiService clanApi;
-    @Inject private BoomerangBanditsConfig config;
-    @Inject private ConfigManager configManager;
+    @Inject
+    private ClanApiService clanApi;
+    @Inject
+    private BoomerangBanditsConfig config;
+    @Inject
+    private ConfigManager configManager;
 
     private ScheduledFuture<?> syncTask;
 
@@ -48,10 +52,10 @@ public class ConfigSyncService {
 
         // Small initial delay to allow the UI and session to stabilize after login (Finding B4)
         syncTask = executor.scheduleAtFixedRate(
-            this::syncConfig,
-            5,
-            intervalSeconds,
-            TimeUnit.SECONDS
+                this::syncConfig,
+                5,
+                intervalSeconds,
+                TimeUnit.SECONDS
         );
 
         log.info("Config sync started (interval: {}s)", intervalSeconds);
@@ -84,8 +88,8 @@ public class ConfigSyncService {
         }
 
         clanApi.fetchPluginConfig(memberCode,
-            this::applyConfig,
-            error -> log.warn("Config sync failed: {}", error)
+                this::applyConfig,
+                error -> log.warn("Config sync failed: {}", error)
         );
     }
 

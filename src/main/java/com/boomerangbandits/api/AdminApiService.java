@@ -6,28 +6,23 @@ import com.boomerangbandits.api.models.AttendanceResult;
 import com.boomerangbandits.api.models.RankChange;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-import java.io.IOException;
-import java.lang.reflect.Type;
-import java.util.List;
-import java.util.function.Consumer;
+import lombok.extern.slf4j.Slf4j;
+import okhttp3.*;
+
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
-import lombok.extern.slf4j.Slf4j;
-import okhttp3.Call;
-import okhttp3.Callback;
-import okhttp3.MediaType;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.RequestBody;
-import okhttp3.Response;
+import java.io.IOException;
+import java.lang.reflect.Type;
+import java.util.List;
+import java.util.function.Consumer;
 
 /**
  * API service for admin-only endpoints.
  * All requests include X-Member-Code header for authentication.
  * Backend verifies admin rank server-side.
- *
+ * <p>
  * Separated from ClanApiService to keep admin concerns isolated.
  */
 @Slf4j
@@ -58,18 +53,18 @@ public class AdminApiService {
      * @param entries         per-member attendance data from EventAttendanceTracker
      */
     public void submitAttendance(@Nonnull String eventName,
-                                  int durationSeconds,
-                                  @Nonnull java.util.List<AttendanceEntry> entries,
-                                  @Nonnull Consumer<AttendanceResult> onSuccess,
-                                  @Nonnull Consumer<Exception> onError) {
+                                 int durationSeconds,
+                                 @Nonnull java.util.List<AttendanceEntry> entries,
+                                 @Nonnull Consumer<AttendanceResult> onSuccess,
+                                 @Nonnull Consumer<Exception> onError) {
         String json = gson.toJson(new AttendanceRequest(eventName, durationSeconds, entries));
 
         Request request = new Request.Builder()
-            .url(ApiConstants.BACKEND_BASE_URL + "/admin/attendance/ingest")
-            .addHeader("X-Member-Code", config.memberCode())
-            .addHeader("User-Agent", ApiConstants.USER_AGENT)
-            .post(RequestBody.create(ApiConstants.JSON, json))
-            .build();
+                .url(ApiConstants.BACKEND_BASE_URL + "/admin/attendance/ingest")
+                .addHeader("X-Member-Code", config.memberCode())
+                .addHeader("User-Agent", ApiConstants.USER_AGENT)
+                .post(RequestBody.create(ApiConstants.JSON, json))
+                .build();
 
         httpClient.newCall(request).enqueue(new Callback() {
             @Override
@@ -91,7 +86,7 @@ public class AdminApiService {
                         return;
                     }
                     AttendanceResult result = gson.fromJson(
-                        response.body().string(), AttendanceResult.class
+                            response.body().string(), AttendanceResult.class
                     );
                     onSuccess.accept(result);
                 } catch (Exception e) {
@@ -110,12 +105,12 @@ public class AdminApiService {
      * Backend: GET /api/admin/rank-changes/pending
      */
     public void fetchPendingRankChanges(@Nonnull Consumer<List<RankChange>> onSuccess,
-                                         @Nonnull Consumer<Exception> onError) {
+                                        @Nonnull Consumer<Exception> onError) {
         Request request = new Request.Builder()
-            .url(ApiConstants.BACKEND_BASE_URL + "/admin/rank-changes/pending")
-            .addHeader("X-Member-Code", config.memberCode())
-            .addHeader("User-Agent", ApiConstants.USER_AGENT)
-            .build();
+                .url(ApiConstants.BACKEND_BASE_URL + "/admin/rank-changes/pending")
+                .addHeader("X-Member-Code", config.memberCode())
+                .addHeader("User-Agent", ApiConstants.USER_AGENT)
+                .build();
 
         httpClient.newCall(request).enqueue(new Callback() {
             @Override
@@ -131,10 +126,11 @@ public class AdminApiService {
                         handleErrorResponse(response, onError);
                         return;
                     }
-                    Type listType = new TypeToken<RankChangesResponse>() {}.getType();
+                    Type listType = new TypeToken<RankChangesResponse>() {
+                    }.getType();
                     assert response.body() != null;
                     RankChangesResponse result = gson.fromJson(
-                        response.body().string(), listType
+                            response.body().string(), listType
                     );
                     onSuccess.accept(result.rankChanges);
                 } catch (Exception e) {
@@ -150,18 +146,18 @@ public class AdminApiService {
      * Immediately updates website rank and queues a pending item for in-game processing.
      */
     public void proposeRankChange(@Nonnull String memberRsn,
-                                   @Nonnull String newRank,
-                                   @Nonnull String reason,
-                                   @Nonnull Consumer<RankChange> onSuccess,
-                                   @Nonnull Consumer<Exception> onError) {
+                                  @Nonnull String newRank,
+                                  @Nonnull String reason,
+                                  @Nonnull Consumer<RankChange> onSuccess,
+                                  @Nonnull Consumer<Exception> onError) {
         String json = gson.toJson(new ProposeRankChangeRequest(memberRsn, newRank, reason));
 
         Request request = new Request.Builder()
-            .url(ApiConstants.BACKEND_BASE_URL + "/admin/rank-changes")
-            .addHeader("X-Member-Code", config.memberCode())
-            .addHeader("User-Agent", ApiConstants.USER_AGENT)
-            .post(RequestBody.create(ApiConstants.JSON, json))
-            .build();
+                .url(ApiConstants.BACKEND_BASE_URL + "/admin/rank-changes")
+                .addHeader("X-Member-Code", config.memberCode())
+                .addHeader("User-Agent", ApiConstants.USER_AGENT)
+                .post(RequestBody.create(ApiConstants.JSON, json))
+                .build();
 
         httpClient.newCall(request).enqueue(new Callback() {
             @Override
@@ -178,7 +174,7 @@ public class AdminApiService {
                         return;
                     }
                     ProposeRankChangeResponse result = gson.fromJson(
-                        response.body().string(), ProposeRankChangeResponse.class);
+                            response.body().string(), ProposeRankChangeResponse.class);
                     onSuccess.accept(result.rankChange);
                 } catch (Exception e) {
                     onError.accept(e);
@@ -192,14 +188,14 @@ public class AdminApiService {
      * Backend: POST /api/admin/rank-changes/{id}/actualize
      */
     public void actualizeRankChange(@Nonnull String rankChangeId,
-                                     @Nonnull Consumer<Boolean> onSuccess,
-                                     @Nonnull Consumer<Exception> onError) {
+                                    @Nonnull Consumer<Boolean> onSuccess,
+                                    @Nonnull Consumer<Exception> onError) {
         Request request = new Request.Builder()
-            .url(ApiConstants.BACKEND_BASE_URL + "/admin/rank-changes/" + rankChangeId + "/actualize")
-            .addHeader("X-Member-Code", config.memberCode())
-            .addHeader("User-Agent", ApiConstants.USER_AGENT)
-            .post(RequestBody.create(ApiConstants.JSON, "{}"))
-            .build();
+                .url(ApiConstants.BACKEND_BASE_URL + "/admin/rank-changes/" + rankChangeId + "/actualize")
+                .addHeader("X-Member-Code", config.memberCode())
+                .addHeader("User-Agent", ApiConstants.USER_AGENT)
+                .post(RequestBody.create(ApiConstants.JSON, "{}"))
+                .build();
 
         executeSimplePost(request, onSuccess, onError);
     }
@@ -213,16 +209,16 @@ public class AdminApiService {
      * Backend: POST /api/admin/announcement
      */
     public void updateAnnouncement(@Nonnull String message,
-                                    @Nonnull Consumer<Boolean> onSuccess,
-                                    @Nonnull Consumer<Exception> onError) {
+                                   @Nonnull Consumer<Boolean> onSuccess,
+                                   @Nonnull Consumer<Exception> onError) {
         String json = gson.toJson(new AnnouncementRequest(message));
 
         Request request = new Request.Builder()
-            .url(ApiConstants.BACKEND_BASE_URL + "/admin/announcement")
-            .addHeader("X-Member-Code", config.memberCode())
-            .addHeader("User-Agent", ApiConstants.USER_AGENT)
-            .post(RequestBody.create(ApiConstants.JSON, json))
-            .build();
+                .url(ApiConstants.BACKEND_BASE_URL + "/admin/announcement")
+                .addHeader("X-Member-Code", config.memberCode())
+                .addHeader("User-Agent", ApiConstants.USER_AGENT)
+                .post(RequestBody.create(ApiConstants.JSON, json))
+                .build();
 
         executeSimplePost(request, onSuccess, onError);
     }
@@ -232,8 +228,8 @@ public class AdminApiService {
     // =========================================================================
 
     private void executeSimplePost(Request request,
-                                    Consumer<Boolean> onSuccess,
-                                    Consumer<Exception> onError) {
+                                   Consumer<Boolean> onSuccess,
+                                   Consumer<Exception> onError) {
         httpClient.newCall(request).enqueue(new Callback() {
             @Override
             public void onFailure(Call call, IOException e) {
@@ -270,6 +266,7 @@ public class AdminApiService {
         final String eventName;
         final int durationSeconds;
         final java.util.List<AttendanceEntry> entries;
+
         AttendanceRequest(String eventName, int durationSeconds, java.util.List<AttendanceEntry> entries) {
             this.eventName = eventName;
             this.durationSeconds = durationSeconds;
@@ -279,13 +276,17 @@ public class AdminApiService {
 
     private static class AnnouncementRequest {
         final String message;
-        AnnouncementRequest(String message) { this.message = message; }
+
+        AnnouncementRequest(String message) {
+            this.message = message;
+        }
     }
 
     private static class ProposeRankChangeRequest {
         final String memberRsn;
         final String newRank;
         final String reason;
+
         ProposeRankChangeRequest(String memberRsn, String newRank, String reason) {
             this.memberRsn = memberRsn;
             this.newRank = newRank;

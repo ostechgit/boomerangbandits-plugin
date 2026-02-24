@@ -6,18 +6,20 @@ import com.boomerangbandits.api.WomApiService;
 import com.boomerangbandits.api.models.ActiveEvent;
 import com.boomerangbandits.api.models.EventDetails;
 import com.boomerangbandits.api.models.WomCompetition;
-import com.boomerangbandits.api.models.WomParticipant;
 import com.boomerangbandits.ui.UIConstants;
 import com.boomerangbandits.ui.components.CountdownLabel;
 import com.boomerangbandits.ui.components.LeaderboardTable;
 import com.boomerangbandits.util.RefreshThrottler;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
-import java.awt.Color;
-import java.awt.Cursor;
-import java.awt.Dimension;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
+import lombok.extern.slf4j.Slf4j;
+import net.runelite.api.Client;
+import net.runelite.client.ui.ColorScheme;
+
+import javax.inject.Inject;
+import javax.swing.*;
+import javax.swing.border.EmptyBorder;
+import java.awt.*;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -26,51 +28,35 @@ import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
-import javax.inject.Inject;
-import javax.swing.BorderFactory;
-import javax.swing.BoxLayout;
-import javax.swing.JButton;
-import javax.swing.JComboBox;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JTextField;
-import javax.swing.SwingUtilities;
-import javax.swing.border.EmptyBorder;
-import lombok.extern.slf4j.Slf4j;
-import net.runelite.api.Client;
-import net.runelite.client.ui.ColorScheme;
 
 /**
  * Competition panel — list of WOM competitions + active/upcoming clan events.
- *
+ * <p>
  * Uses show/hide instead of CardLayout to avoid height-retention bug.
  */
 @Slf4j
 public class CompetitionPanel extends JPanel {
 
+    private static final ZoneId SYDNEY = ZoneId.of("Australia/Sydney");
+    private static final DateTimeFormatter INPUT_FMT = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+    private static final DateTimeFormatter DISPLAY_FMT = DateTimeFormatter.ofPattern("h:mma zzz dd/MM");
     private final WomApiService womApi;
     private final ClanContentService contentService;
     private final BoomerangBanditsConfig config;
     private final Client client;
     private final Gson gson;
-
-    private static final ZoneId SYDNEY = ZoneId.of("Australia/Sydney");
-    private static final DateTimeFormatter INPUT_FMT = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
-    private static final DateTimeFormatter DISPLAY_FMT = DateTimeFormatter.ofPattern("h:mma zzz dd/MM");
-
+    private final RefreshThrottler refreshThrottler;
     // List view
     private JPanel listPanel;
     private JPanel competitionListContainer;
     private JPanel eventCardContainer;
     private JPanel addEventForm;
-
     // Detail view
     private JPanel detailPanel;
     private JLabel detailTitle;
     private JLabel detailMetric;
     private CountdownLabel detailCountdown;
     private LeaderboardTable detailLeaderboard;
-
     // Add-event form fields
     private JTextField fieldName;
     private JTextField fieldDescription;
@@ -83,19 +69,26 @@ public class CompetitionPanel extends JPanel {
     private JTextField fieldEndTime;
     private JLabel formStatus;
 
-    private final RefreshThrottler refreshThrottler;
+    @Inject
+    public CompetitionPanel(WomApiService womApi, ClanContentService contentService,
+                            BoomerangBanditsConfig config, Client client, Gson gson) {
+        this.womApi = womApi;
+        this.contentService = contentService;
+        this.config = config;
+        this.client = client;
+        this.gson = gson;
+        this.refreshThrottler = new RefreshThrottler(60 * 60 * 1_000); // 1 hour
 
-    /** Validated event form fields (world + time range). */
-    private static class EventTimeValidation {
-        final int world;
-        final Instant startUtc;
-        final Instant endUtc;
+        setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
+        setBackground(ColorScheme.DARK_GRAY_COLOR);
 
-        EventTimeValidation(int world, Instant startUtc, Instant endUtc) {
-            this.world = world;
-            this.startUtc = startUtc;
-            this.endUtc = endUtc;
-        }
+        buildListPanel();
+        buildDetailPanel();
+
+        add(listPanel);
+        add(detailPanel);
+
+        showList();
     }
 
     /**
@@ -131,32 +124,6 @@ public class CompetitionPanel extends JPanel {
         return new EventTimeValidation(world, startUtc, endUtc);
     }
 
-    @Inject
-    public CompetitionPanel(WomApiService womApi, ClanContentService contentService,
-                            BoomerangBanditsConfig config, Client client, Gson gson) {
-        this.womApi = womApi;
-        this.contentService = contentService;
-        this.config = config;
-        this.client = client;
-        this.gson = gson;
-        this.refreshThrottler = new RefreshThrottler(60 * 60 * 1_000); // 1 hour
-
-        setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
-        setBackground(ColorScheme.DARK_GRAY_COLOR);
-
-        buildListPanel();
-        buildDetailPanel();
-
-        add(listPanel);
-        add(detailPanel);
-
-        showList();
-    }
-
-    // -------------------------------------------------------------------------
-    // Build — list panel
-    // -------------------------------------------------------------------------
-
     private void buildListPanel() {
         listPanel = new JPanel();
         listPanel.setLayout(new BoxLayout(listPanel, BoxLayout.Y_AXIS));
@@ -167,7 +134,7 @@ public class CompetitionPanel extends JPanel {
         compHeader.setForeground(Color.WHITE);
         compHeader.setFont(UIConstants.deriveFont(compHeader.getFont(), UIConstants.FONT_SIZE_MEDIUM, UIConstants.FONT_BOLD));
         compHeader.setBorder(new EmptyBorder(UIConstants.PADDING_STANDARD, UIConstants.PADDING_STANDARD,
-            UIConstants.PADDING_STANDARD, UIConstants.PADDING_STANDARD));
+                UIConstants.PADDING_STANDARD, UIConstants.PADDING_STANDARD));
         compHeader.setAlignmentX(LEFT_ALIGNMENT);
         listPanel.add(compHeader);
 
@@ -181,7 +148,7 @@ public class CompetitionPanel extends JPanel {
         eventHeader.setForeground(Color.WHITE);
         eventHeader.setFont(UIConstants.deriveFont(eventHeader.getFont(), UIConstants.FONT_SIZE_MEDIUM, UIConstants.FONT_BOLD));
         eventHeader.setBorder(new EmptyBorder(UIConstants.PADDING_STANDARD, UIConstants.PADDING_STANDARD,
-            UIConstants.PADDING_SMALL, UIConstants.PADDING_STANDARD));
+                UIConstants.PADDING_SMALL, UIConstants.PADDING_STANDARD));
         eventHeader.setAlignmentX(LEFT_ALIGNMENT);
         listPanel.add(eventHeader);
 
@@ -196,7 +163,7 @@ public class CompetitionPanel extends JPanel {
     }
 
     // -------------------------------------------------------------------------
-    // Build — add event form (collapsible)
+    // Build — list panel
     // -------------------------------------------------------------------------
 
     private JPanel buildAddEventForm() {
@@ -206,13 +173,13 @@ public class CompetitionPanel extends JPanel {
         form.setBackground(ColorScheme.DARK_GRAY_COLOR);
         form.setAlignmentX(LEFT_ALIGNMENT);
         form.setBorder(new EmptyBorder(UIConstants.PADDING_SMALL, UIConstants.PADDING_STANDARD,
-            UIConstants.PADDING_STANDARD, UIConstants.PADDING_STANDARD));
+                UIConstants.PADDING_STANDARD, UIConstants.PADDING_STANDARD));
 
         // --- Clickable header row (GridBagLayout: title left, arrow right) ---
         JPanel headerRow = new JPanel(new GridBagLayout());
         headerRow.setBackground(ColorScheme.DARKER_GRAY_COLOR);
         headerRow.setBorder(new EmptyBorder(UIConstants.PADDING_SMALL, UIConstants.PADDING_SMALL,
-            UIConstants.PADDING_SMALL, UIConstants.PADDING_SMALL));
+                UIConstants.PADDING_SMALL, UIConstants.PADDING_SMALL));
         headerRow.setMaximumSize(new Dimension(Integer.MAX_VALUE, 30));
         headerRow.setAlignmentX(LEFT_ALIGNMENT);
         headerRow.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
@@ -226,12 +193,17 @@ public class CompetitionPanel extends JPanel {
         arrowLabel.setFont(UIConstants.deriveFont(arrowLabel.getFont(), UIConstants.FONT_SIZE_SMALL));
 
         GridBagConstraints hc = new GridBagConstraints();
-        hc.gridx = 0; hc.gridy = 0; hc.weightx = 1.0;
-        hc.fill = GridBagConstraints.HORIZONTAL; hc.anchor = GridBagConstraints.WEST;
+        hc.gridx = 0;
+        hc.gridy = 0;
+        hc.weightx = 1.0;
+        hc.fill = GridBagConstraints.HORIZONTAL;
+        hc.anchor = GridBagConstraints.WEST;
         headerRow.add(headerLabel, hc);
 
-        hc.gridx = 1; hc.weightx = 0;
-        hc.fill = GridBagConstraints.NONE; hc.anchor = GridBagConstraints.EAST;
+        hc.gridx = 1;
+        hc.weightx = 0;
+        hc.fill = GridBagConstraints.NONE;
+        hc.anchor = GridBagConstraints.EAST;
         headerRow.add(arrowLabel, hc);
 
         form.add(headerRow);
@@ -296,6 +268,10 @@ public class CompetitionPanel extends JPanel {
         return form;
     }
 
+    // -------------------------------------------------------------------------
+    // Build — add event form (collapsible)
+    // -------------------------------------------------------------------------
+
     private JTextField addFormRow(JPanel parent, String placeholder) {
         JTextField field = new JTextField();
         field.setToolTipText(placeholder);
@@ -338,7 +314,7 @@ public class CompetitionPanel extends JPanel {
         }
 
         EventTimeValidation v = validateWorldAndDates(worldStr, startStr, endStr,
-            msg -> setFormStatus(msg, Color.RED));
+                msg -> setFormStatus(msg, Color.RED));
         if (v == null) return;
 
         String rsn = client.getLocalPlayer() != null ? client.getLocalPlayer().getName() : "";
@@ -358,13 +334,13 @@ public class CompetitionPanel extends JPanel {
         setFormStatus("Submitting...", ColorScheme.LIGHT_GRAY_COLOR);
 
         contentService.createEvent(memberCode, gson.toJson(body),
-            () -> SwingUtilities.invokeLater(() -> {
-                setFormStatus("Event created!", new Color(0x4CAF50));
-                clearForm();
-                forceRefresh();
-            }),
-            err -> SwingUtilities.invokeLater(() ->
-                setFormStatus("Failed: " + err.getMessage(), Color.RED))
+                () -> SwingUtilities.invokeLater(() -> {
+                    setFormStatus("Event created!", new Color(0x4CAF50));
+                    clearForm();
+                    forceRefresh();
+                }),
+                err -> SwingUtilities.invokeLater(() ->
+                        setFormStatus("Failed: " + err.getMessage(), Color.RED))
         );
     }
 
@@ -405,7 +381,7 @@ public class CompetitionPanel extends JPanel {
         detailHeader.setLayout(new BoxLayout(detailHeader, BoxLayout.Y_AXIS));
         detailHeader.setBackground(ColorScheme.DARK_GRAY_COLOR);
         detailHeader.setBorder(new EmptyBorder(UIConstants.PADDING_STANDARD, UIConstants.PADDING_STANDARD,
-            UIConstants.PADDING_STANDARD, UIConstants.PADDING_STANDARD));
+                UIConstants.PADDING_STANDARD, UIConstants.PADDING_STANDARD));
         detailHeader.setAlignmentX(LEFT_ALIGNMENT);
 
         detailTitle = new JLabel("Competition");
@@ -462,21 +438,21 @@ public class CompetitionPanel extends JPanel {
         refreshThrottler.recordRefresh();
 
         womApi.fetchCompetitions(
-            competitions -> SwingUtilities.invokeLater(() -> updateCompetitionList(competitions)),
-            error -> SwingUtilities.invokeLater(() -> {
-                log.warn("[CompetitionPanel] Failed to load competitions", error);
-                competitionListContainer.removeAll();
-                JLabel err = new JLabel("Failed to load competitions");
-                err.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
-                err.setBorder(new EmptyBorder(8, UIConstants.PADDING_STANDARD, 8, UIConstants.PADDING_STANDARD));
-                competitionListContainer.add(err);
-                competitionListContainer.revalidate();
-            })
+                competitions -> SwingUtilities.invokeLater(() -> updateCompetitionList(competitions)),
+                error -> SwingUtilities.invokeLater(() -> {
+                    log.warn("[CompetitionPanel] Failed to load competitions", error);
+                    competitionListContainer.removeAll();
+                    JLabel err = new JLabel("Failed to load competitions");
+                    err.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
+                    err.setBorder(new EmptyBorder(8, UIConstants.PADDING_STANDARD, 8, UIConstants.PADDING_STANDARD));
+                    competitionListContainer.add(err);
+                    competitionListContainer.revalidate();
+                })
         );
 
         contentService.fetchActiveEvent(
-            event -> SwingUtilities.invokeLater(() -> updateEventCard(event)),
-            error -> log.warn("[CompetitionPanel] Failed to load events", error)
+                event -> SwingUtilities.invokeLater(() -> updateEventCard(event)),
+                error -> log.warn("[CompetitionPanel] Failed to load events", error)
         );
     }
 
@@ -514,7 +490,7 @@ public class CompetitionPanel extends JPanel {
         JPanel card = new JPanel(new GridBagLayout());
         card.setBackground(ColorScheme.DARKER_GRAY_COLOR);
         card.setBorder(new EmptyBorder(UIConstants.PADDING_STANDARD, UIConstants.PADDING_STANDARD,
-            UIConstants.PADDING_STANDARD, UIConstants.PADDING_STANDARD));
+                UIConstants.PADDING_STANDARD, UIConstants.PADDING_STANDARD));
         card.setMaximumSize(new Dimension(Integer.MAX_VALUE, 60));
         card.setAlignmentX(LEFT_ALIGNMENT);
         card.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
@@ -524,16 +500,24 @@ public class CompetitionPanel extends JPanel {
         JLabel title = new JLabel(comp.getTitle());
         title.setForeground(Color.WHITE);
         title.setFont(UIConstants.deriveFont(title.getFont(), UIConstants.FONT_SIZE_MEDIUM, UIConstants.FONT_BOLD));
-        c.gridx = 0; c.gridy = 0; c.weightx = 1.0; c.gridheight = 1;
-        c.fill = GridBagConstraints.HORIZONTAL; c.anchor = GridBagConstraints.WEST;
+        c.gridx = 0;
+        c.gridy = 0;
+        c.weightx = 1.0;
+        c.gridheight = 1;
+        c.fill = GridBagConstraints.HORIZONTAL;
+        c.anchor = GridBagConstraints.WEST;
         c.insets = new java.awt.Insets(0, 0, 2, 0);
         card.add(title, c);
 
         JLabel arrow = new JLabel("›");
         arrow.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
         arrow.setFont(UIConstants.deriveFont(arrow.getFont(), UIConstants.FONT_SIZE_LARGE));
-        c.gridx = 1; c.gridy = 0; c.gridheight = 2; c.weightx = 0;
-        c.fill = GridBagConstraints.NONE; c.anchor = GridBagConstraints.CENTER;
+        c.gridx = 1;
+        c.gridy = 0;
+        c.gridheight = 2;
+        c.weightx = 0;
+        c.fill = GridBagConstraints.NONE;
+        c.anchor = GridBagConstraints.CENTER;
         c.insets = new java.awt.Insets(0, UIConstants.PADDING_STANDARD, 0, 0);
         card.add(arrow, c);
 
@@ -542,8 +526,12 @@ public class CompetitionPanel extends JPanel {
         JLabel status = new JLabel(statusText + " | " + UIConstants.capitalizeLower(comp.getMetric()));
         status.setForeground(statusColor);
         status.setFont(UIConstants.deriveFont(status.getFont(), UIConstants.FONT_SIZE_SMALL));
-        c.gridx = 0; c.gridy = 1; c.gridheight = 1; c.weightx = 1.0;
-        c.fill = GridBagConstraints.HORIZONTAL; c.anchor = GridBagConstraints.WEST;
+        c.gridx = 0;
+        c.gridy = 1;
+        c.gridheight = 1;
+        c.weightx = 1.0;
+        c.fill = GridBagConstraints.HORIZONTAL;
+        c.anchor = GridBagConstraints.WEST;
         c.insets = new java.awt.Insets(0, 0, 0, 0);
         card.add(status, c);
 
@@ -560,36 +548,35 @@ public class CompetitionPanel extends JPanel {
     // -------------------------------------------------------------------------
     // Competition detail
     // -------------------------------------------------------------------------
-
     private void loadCompetitionDetail(int competitionId) {
         showDetail();
         detailTitle.setText("Loading...");
         detailLeaderboard.setData(null);
 
         womApi.fetchCompetitionDetails(competitionId,
-            comp -> SwingUtilities.invokeLater(() -> {
-                detailTitle.setText(comp.getTitle());
-                detailMetric.setText("Metric: " + UIConstants.capitalizeLower(comp.getMetric()));
-                if (comp.isOngoing()) {
-                    detailCountdown.setTarget(comp.getEndsAt());
-                } else {
-                    detailCountdown.stop();
-                }
+                comp -> SwingUtilities.invokeLater(() -> {
+                    detailTitle.setText(comp.getTitle());
+                    detailMetric.setText("Metric: " + UIConstants.capitalizeLower(comp.getMetric()));
+                    if (comp.isOngoing()) {
+                        detailCountdown.setTarget(comp.getEndsAt());
+                    } else {
+                        detailCountdown.stop();
+                    }
 
-                List<String[]> rows = new ArrayList<>();
-                if (comp.getParticipations() != null) {
-                    comp.getParticipations().stream()
-                        .filter(p -> p.getGained() > 0)
-                        .sorted((a, b) -> Long.compare(b.getGained(), a.getGained()))
-                        .forEach(p -> rows.add(new String[]{
-                            String.valueOf(rows.size() + 1),
-                            p.getDisplayName(),
-                            String.format("%,d", p.getGained())
-                        }));
-                }
-                detailLeaderboard.setData(rows);
-            }),
-            error -> SwingUtilities.invokeLater(() -> detailTitle.setText("Failed to load"))
+                    List<String[]> rows = new ArrayList<>();
+                    if (comp.getParticipations() != null) {
+                        comp.getParticipations().stream()
+                                .filter(p -> p.getGained() > 0)
+                                .sorted((a, b) -> Long.compare(b.getGained(), a.getGained()))
+                                .forEach(p -> rows.add(new String[]{
+                                        String.valueOf(rows.size() + 1),
+                                        p.getDisplayName(),
+                                        String.format("%,d", p.getGained())
+                                }));
+                    }
+                    detailLeaderboard.setData(rows);
+                }),
+                error -> SwingUtilities.invokeLater(() -> detailTitle.setText("Failed to load"))
         );
     }
 
@@ -626,7 +613,8 @@ public class CompetitionPanel extends JPanel {
         if (event.getStartTime() != null && !event.getStartTime().isEmpty()) {
             try {
                 isLive = Instant.parse(event.getStartTime()).isBefore(Instant.now());
-            } catch (Exception ignored) {}
+            } catch (Exception ignored) {
+            }
         }
 
         Color borderColor = isLive ? new Color(0x4CAF50) : new Color(0xFFC107);
@@ -634,9 +622,9 @@ public class CompetitionPanel extends JPanel {
         JPanel card = new JPanel(new GridBagLayout());
         card.setBackground(ColorScheme.DARKER_GRAY_COLOR);
         card.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(borderColor),
-            new EmptyBorder(UIConstants.PADDING_STANDARD, UIConstants.PADDING_STANDARD,
-                UIConstants.PADDING_STANDARD, UIConstants.PADDING_STANDARD)
+                BorderFactory.createLineBorder(borderColor),
+                new EmptyBorder(UIConstants.PADDING_STANDARD, UIConstants.PADDING_STANDARD,
+                        UIConstants.PADDING_STANDARD, UIConstants.PADDING_STANDARD)
         ));
         card.setMaximumSize(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE));
         card.setAlignmentX(LEFT_ALIGNMENT);
@@ -650,7 +638,10 @@ public class CompetitionPanel extends JPanel {
         // Name — col 0
         JLabel nameLabel = new JLabel(event.getName());
         nameLabel.setForeground(Color.WHITE);
-        c.gridx = 0; c.gridy = row; c.weightx = 1.0; c.gridwidth = 1;
+        c.gridx = 0;
+        c.gridy = row;
+        c.weightx = 1.0;
+        c.gridwidth = 1;
         card.add(nameLabel, c);
 
         // Type badge — col 1
@@ -659,11 +650,14 @@ public class CompetitionPanel extends JPanel {
             typeLabel.setForeground(new Color(0x2196F3));
             typeLabel.setFont(UIConstants.deriveFont(typeLabel.getFont(), UIConstants.FONT_SIZE_SMALL, UIConstants.FONT_BOLD));
             typeLabel.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(0x2196F3)),
-                new EmptyBorder(0, 3, 0, 3)
+                    BorderFactory.createLineBorder(new Color(0x2196F3)),
+                    new EmptyBorder(0, 3, 0, 3)
             ));
-            c.gridx = 1; c.gridy = row; c.weightx = 0;
-            c.fill = GridBagConstraints.NONE; c.anchor = GridBagConstraints.EAST;
+            c.gridx = 1;
+            c.gridy = row;
+            c.weightx = 0;
+            c.fill = GridBagConstraints.NONE;
+            c.anchor = GridBagConstraints.EAST;
             c.insets = new java.awt.Insets(1, 4, 1, 4);
             card.add(typeLabel, c);
         }
@@ -672,15 +666,21 @@ public class CompetitionPanel extends JPanel {
         JLabel statusBadge = new JLabel(isLive ? "LIVE" : "UPCOMING");
         statusBadge.setForeground(borderColor);
         statusBadge.setFont(UIConstants.deriveFont(statusBadge.getFont(), UIConstants.FONT_SIZE_SMALL, UIConstants.FONT_BOLD));
-        c.gridx = 2; c.gridy = row; c.weightx = 0;
-        c.fill = GridBagConstraints.NONE; c.anchor = GridBagConstraints.EAST;
+        c.gridx = 2;
+        c.gridy = row;
+        c.weightx = 0;
+        c.fill = GridBagConstraints.NONE;
+        c.anchor = GridBagConstraints.EAST;
         c.insets = new java.awt.Insets(1, 0, 1, 0);
         card.add(statusBadge, c);
         row++;
 
         // Full-width rows span all 3 cols
-        c.gridx = 0; c.weightx = 1.0; c.gridwidth = 3;
-        c.fill = GridBagConstraints.HORIZONTAL; c.anchor = GridBagConstraints.WEST;
+        c.gridx = 0;
+        c.weightx = 1.0;
+        c.gridwidth = 3;
+        c.fill = GridBagConstraints.HORIZONTAL;
+        c.anchor = GridBagConstraints.WEST;
         c.insets = new java.awt.Insets(1, 0, 1, 0);
 
         if (event.getLocation() != null && !event.getLocation().isEmpty()) {
@@ -755,13 +755,15 @@ public class CompetitionPanel extends JPanel {
 
             JButton editBtn = new JButton("Edit");
             editBtn.setForeground(new Color(0x2196F3));
-            bc.gridx = 0; bc.weightx = 1.0;
+            bc.gridx = 0;
+            bc.weightx = 1.0;
             bc.insets = new java.awt.Insets(0, 0, 0, 2);
             btnRow.add(editBtn, bc);
 
             JButton deleteBtn = new JButton("Delete");
             deleteBtn.setForeground(new Color(0xF44336));
-            bc.gridx = 1; bc.weightx = 1.0;
+            bc.gridx = 1;
+            bc.weightx = 1.0;
             bc.insets = new java.awt.Insets(0, 2, 0, 0);
             btnRow.add(deleteBtn, bc);
 
@@ -771,12 +773,12 @@ public class CompetitionPanel extends JPanel {
                 deleteBtn.setEnabled(false);
                 deleteBtn.setText("...");
                 contentService.deleteEvent(memberCode, event.getId(),
-                    () -> SwingUtilities.invokeLater(this::forceRefresh),
-                    err -> SwingUtilities.invokeLater(() -> {
-                        deleteBtn.setEnabled(true);
-                        deleteBtn.setText("Delete");
-                        log.warn("Failed to delete event: {}", err.getMessage());
-                    })
+                        () -> SwingUtilities.invokeLater(this::forceRefresh),
+                        err -> SwingUtilities.invokeLater(() -> {
+                            deleteBtn.setEnabled(true);
+                            deleteBtn.setText("Delete");
+                            log.warn("Failed to delete event: {}", err.getMessage());
+                        })
                 );
             });
 
@@ -797,28 +799,31 @@ public class CompetitionPanel extends JPanel {
         JTextField fPassword = new JTextField(event.getEventPassword() != null ? event.getEventPassword() : "");
         JTextField fChallengePw = new JTextField(event.getChallengePassword() != null ? event.getChallengePassword() : "");
         JTextField fStart = new JTextField(event.getStartTime() != null
-            ? INPUT_FMT.format(Instant.parse(event.getStartTime()).atZone(SYDNEY).toLocalDateTime()) : "");
+                ? INPUT_FMT.format(Instant.parse(event.getStartTime()).atZone(SYDNEY).toLocalDateTime()) : "");
         JTextField fEnd = new JTextField(event.getEndTime() != null
-            ? INPUT_FMT.format(Instant.parse(event.getEndTime()).atZone(SYDNEY).toLocalDateTime()) : "");
+                ? INPUT_FMT.format(Instant.parse(event.getEndTime()).atZone(SYDNEY).toLocalDateTime()) : "");
 
         JPanel form = new JPanel(new GridBagLayout());
         GridBagConstraints lc = new GridBagConstraints();
         lc.fill = GridBagConstraints.HORIZONTAL;
         lc.insets = new java.awt.Insets(2, 4, 2, 4);
         String[] labels = {"Name", "Description", "Type", "Location", "World",
-                           "Password", "Challenge PW", "Start (dd/MM/yyyy HH:mm)", "End (dd/MM/yyyy HH:mm)"};
+                "Password", "Challenge PW", "Start (dd/MM/yyyy HH:mm)", "End (dd/MM/yyyy HH:mm)"};
         java.awt.Component[] fields = {fName, fDesc, fType, fLocation, fWorld, fPassword, fChallengePw, fStart, fEnd};
         for (int i = 0; i < labels.length; i++) {
-            lc.gridx = 0; lc.gridy = i; lc.weightx = 0;
+            lc.gridx = 0;
+            lc.gridy = i;
+            lc.weightx = 0;
             form.add(new JLabel(labels[i]), lc);
-            lc.gridx = 1; lc.weightx = 1.0;
+            lc.gridx = 1;
+            lc.weightx = 1.0;
             form.add(fields[i], lc);
         }
 
         int result = javax.swing.JOptionPane.showConfirmDialog(
-            this, form, "Edit Event",
-            javax.swing.JOptionPane.OK_CANCEL_OPTION,
-            javax.swing.JOptionPane.PLAIN_MESSAGE
+                this, form, "Edit Event",
+                javax.swing.JOptionPane.OK_CANCEL_OPTION,
+                javax.swing.JOptionPane.PLAIN_MESSAGE
         );
         if (result != javax.swing.JOptionPane.OK_OPTION) return;
 
@@ -834,7 +839,7 @@ public class CompetitionPanel extends JPanel {
         }
 
         EventTimeValidation v = validateWorldAndDates(worldStr, startStr, endStr,
-            msg -> javax.swing.JOptionPane.showMessageDialog(this, msg));
+                msg -> javax.swing.JOptionPane.showMessageDialog(this, msg));
         if (v == null) return;
 
         // Build patch body — passwords sent as null if cleared
@@ -855,9 +860,9 @@ public class CompetitionPanel extends JPanel {
         body.addProperty("challengePassword", cpw.isEmpty() ? null : cpw);
 
         contentService.patchEvent(memberCode, event.getId(), gson.toJson(body),
-            () -> SwingUtilities.invokeLater(this::forceRefresh),
-            err -> SwingUtilities.invokeLater(() ->
-                javax.swing.JOptionPane.showMessageDialog(this, "Failed: " + err.getMessage()))
+                () -> SwingUtilities.invokeLater(this::forceRefresh),
+                err -> SwingUtilities.invokeLater(() ->
+                        javax.swing.JOptionPane.showMessageDialog(this, "Failed: " + err.getMessage()))
         );
     }
 
@@ -865,5 +870,20 @@ public class CompetitionPanel extends JPanel {
         JLabel label = new JLabel(text);
         label.setForeground(color);
         return label;
+    }
+
+    /**
+     * Validated event form fields (world + time range).
+     */
+    private static class EventTimeValidation {
+        final int world;
+        final Instant startUtc;
+        final Instant endUtc;
+
+        EventTimeValidation(int world, Instant startUtc, Instant endUtc) {
+            this.world = world;
+            this.startUtc = startUtc;
+            this.endUtc = endUtc;
+        }
     }
 }

@@ -1,7 +1,8 @@
 package com.boomerangbandits.api;
 
 import com.boomerangbandits.BoomerangBanditsConfig;
-import com.boomerangbandits.api.models.*;
+import com.boomerangbandits.api.models.ActiveEvent;
+import com.boomerangbandits.api.models.ActiveEventResponse;
 import com.boomerangbandits.util.CachedData;
 import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
@@ -16,19 +17,19 @@ import java.util.function.Consumer;
 @Slf4j
 @Singleton
 public class ClanContentService {
-    
+
     private final OkHttpClient httpClient;
     private final Gson gson;
     private final BoomerangBanditsConfig config;
-    
+
     // Cached data with TTLs
     private final CachedData<ActiveEvent> activeEventCache;
 
     @Inject
     public ClanContentService(
-        @Named("boomerang") OkHttpClient httpClient,
-        Gson gson,
-        BoomerangBanditsConfig config
+            @Named("boomerang") OkHttpClient httpClient,
+            Gson gson,
+            BoomerangBanditsConfig config
     ) {
         this.httpClient = httpClient;
         this.gson = gson;
@@ -41,8 +42,8 @@ public class ClanContentService {
      * Fetch active event for overlay
      */
     public void fetchActiveEvent(
-        Consumer<ActiveEvent> onSuccess,
-        Consumer<Exception> onError
+            Consumer<ActiveEvent> onSuccess,
+            Consumer<Exception> onError
     ) {
         // Check cache first
         if (activeEventCache.isFresh()) {
@@ -53,17 +54,17 @@ public class ClanContentService {
 
         // Make API call
         Request request = new Request.Builder()
-            .url(ApiConstants.BACKEND_BASE_URL + "/events/active")
-            .get()
-            .build();
-        
+                .url(ApiConstants.BACKEND_BASE_URL + "/events/active")
+                .get()
+                .build();
+
         httpClient.newCall(request).enqueue(new Callback() {
             @Override
             public void onFailure(Call call, IOException e) {
                 log.warn("Failed to fetch active event", e);
                 onError.accept(e);
             }
-            
+
             @Override
             public void onResponse(Call call, Response response) throws IOException {
                 try (response) {
@@ -75,19 +76,19 @@ public class ClanContentService {
                     assert response.body() != null;
                     String body = response.body().string();
                     ActiveEventResponse resp = gson.fromJson(body, ActiveEventResponse.class);
-                    
+
                     if (resp == null || !resp.isSuccess()) {
                         onError.accept(new IOException("Invalid response"));
                         return;
                     }
-                    
+
                     ActiveEvent event = new ActiveEvent();
                     event.setActive(resp.isActive());
                     event.setEvents(resp.getEvents());
-                    
+
                     activeEventCache.update(event);
                     onSuccess.accept(event);
-                    
+
                 } catch (Exception e) {
                     log.error("Failed to parse active event", e);
                     onError.accept(e);
@@ -95,21 +96,21 @@ public class ClanContentService {
             }
         });
     }
-    
+
     /**
      * DELETE /api/events/active/{eventId} — deactivate/delete an active event.
      */
     public void deleteEvent(
-        String memberCode,
-        String eventId,
-        Runnable onSuccess,
-        Consumer<Exception> onError
+            String memberCode,
+            String eventId,
+            Runnable onSuccess,
+            Consumer<Exception> onError
     ) {
         Request request = new Request.Builder()
-            .url(ApiConstants.BACKEND_BASE_URL + "/events/active/" + eventId)
-            .header("X-Member-Code", memberCode)
-            .delete()
-            .build();
+                .url(ApiConstants.BACKEND_BASE_URL + "/events/active/" + eventId)
+                .header("X-Member-Code", memberCode)
+                .delete()
+                .build();
 
         executeWrite(request, "delete event", onSuccess, onError);
     }
@@ -118,16 +119,16 @@ public class ClanContentService {
      * POST /api/events/active — create a new active event.
      */
     public void createEvent(
-        String memberCode,
-        String payload,
-        Runnable onSuccess,
-        Consumer<Exception> onError
+            String memberCode,
+            String payload,
+            Runnable onSuccess,
+            Consumer<Exception> onError
     ) {
         Request request = new Request.Builder()
-            .url(ApiConstants.BACKEND_BASE_URL + "/events/active")
-            .header("X-Member-Code", memberCode)
-            .post(RequestBody.create(ApiConstants.JSON, payload))
-            .build();
+                .url(ApiConstants.BACKEND_BASE_URL + "/events/active")
+                .header("X-Member-Code", memberCode)
+                .post(RequestBody.create(ApiConstants.JSON, payload))
+                .build();
 
         executeWrite(request, "create event", onSuccess, onError);
     }
@@ -136,17 +137,17 @@ public class ClanContentService {
      * PATCH /api/events/active/{eventId} — update an existing active event.
      */
     public void patchEvent(
-        String memberCode,
-        String eventId,
-        String payload,
-        Runnable onSuccess,
-        Consumer<Exception> onError
+            String memberCode,
+            String eventId,
+            String payload,
+            Runnable onSuccess,
+            Consumer<Exception> onError
     ) {
         Request request = new Request.Builder()
-            .url(ApiConstants.BACKEND_BASE_URL + "/events/active/" + eventId)
-            .header("X-Member-Code", memberCode)
-            .patch(RequestBody.create(ApiConstants.JSON, payload))
-            .build();
+                .url(ApiConstants.BACKEND_BASE_URL + "/events/active/" + eventId)
+                .header("X-Member-Code", memberCode)
+                .patch(RequestBody.create(ApiConstants.JSON, payload))
+                .build();
 
         executeWrite(request, "patch event", onSuccess, onError);
     }
