@@ -156,14 +156,6 @@ public interface BoomerangBanditsConfig extends Config {
     default int maxRetryAttempts() { return 3; }
 
     @ConfigItem(
-        keyName = "devMode",
-        name = "",
-        description = "",
-        hidden = true
-    )
-    default boolean devMode() { return false; }
-
-    @ConfigItem(
         keyName = "dinkConfigUrl",
         name = "",
         description = "",

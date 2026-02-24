@@ -10,11 +10,9 @@ import com.boomerangbandits.api.WomApiService.SyncMember;
 import java.util.ArrayList;
 import net.runelite.api.clan.ClanSettings;
 import net.runelite.client.util.Text;
-import com.boomerangbandits.notifiers.*;
 import com.boomerangbandits.services.EventAttendanceTracker;
 import com.boomerangbandits.services.CompetitionScheduler;
 import com.boomerangbandits.services.ConfigSyncService;
-import com.boomerangbandits.services.WebhookService;
 import com.boomerangbandits.ui.BoomerangPanel;
 import com.boomerangbandits.ui.EventOverlay;
 import com.boomerangbandits.ui.panels.ClanHubPanel;
@@ -81,9 +79,6 @@ public class BoomerangBanditsPlugin extends Plugin {
     @Inject private ConfigSyncService configSyncService;
 
     // Phase 2: Services
-    @Inject private WebhookService webhookService;
-
-    // Phase 3: Services
     @Inject private WomApiService womApi;
     @Inject private CompetitionScheduler competitionScheduler;
     @Inject private EventFilterManager eventFilterManager;
@@ -96,10 +91,6 @@ public class BoomerangBanditsPlugin extends Plugin {
 
     // Sound effects
     @Inject private com.boomerangbandits.services.CofferDepositSoundService cofferDepositSoundService;
-
-    // Notifiers
-    @Inject private LoginNotifier loginNotifier;
-    @Inject private LogoutNotifier logoutNotifier;
 
     // Phase 6: Overlay
     @Inject private EventOverlay eventOverlay;
@@ -144,7 +135,7 @@ public class BoomerangBanditsPlugin extends Plugin {
         // Register notifiers
         registerNotifiers();
 
-        log.info("Boomerang Bandits plugin started (devMode: {})", config.devMode());
+        log.info("Boomerang Bandits plugin started");
     }
 
     @Override
@@ -371,15 +362,9 @@ public class BoomerangBanditsPlugin extends Plugin {
         SwingUtilities.invokeLater(() -> panel.onLogin(playerName));
 
         authenticate();
-        
-        // Notify login after authentication
-        loginNotifier.onLogin();
     }
 
     private void handleLogout() {
-        // Notify logout before clearing state
-        logoutNotifier.onLogout();
-        
         authenticated = false;
         configSyncService.stop();
         clanApi.resetDegradedState();

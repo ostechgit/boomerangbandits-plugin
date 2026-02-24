@@ -4,7 +4,6 @@ import com.boomerangbandits.BoomerangBanditsConfig;
 import com.boomerangbandits.api.models.AttendanceEntry;
 import com.boomerangbandits.api.models.AttendanceResult;
 import com.boomerangbandits.api.models.RankChange;
-import com.boomerangbandits.util.DevModeDataProvider;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import java.io.IOException;
@@ -63,12 +62,6 @@ public class AdminApiService {
                                   @Nonnull java.util.List<AttendanceEntry> entries,
                                   @Nonnull Consumer<AttendanceResult> onSuccess,
                                   @Nonnull Consumer<Exception> onError) {
-        if (config.devMode()) {
-            log.info("[DEV MODE] Simulating attendance submission ({} entries)", entries.size());
-            onSuccess.accept(DevModeDataProvider.getTestAttendanceResult());
-            return;
-        }
-
         String json = gson.toJson(new AttendanceRequest(eventName, durationSeconds, entries));
 
         Request request = new Request.Builder()
@@ -118,12 +111,6 @@ public class AdminApiService {
      */
     public void fetchPendingRankChanges(@Nonnull Consumer<List<RankChange>> onSuccess,
                                          @Nonnull Consumer<Exception> onError) {
-        if (config.devMode()) {
-            log.info("[DEV MODE] Returning test rank changes");
-            onSuccess.accept(DevModeDataProvider.getTestRankChanges());
-            return;
-        }
-
         Request request = new Request.Builder()
             .url(ApiConstants.BACKEND_BASE_URL + "/admin/rank-changes/pending")
             .addHeader("X-Member-Code", config.memberCode())
@@ -167,18 +154,6 @@ public class AdminApiService {
                                    @Nonnull String reason,
                                    @Nonnull Consumer<RankChange> onSuccess,
                                    @Nonnull Consumer<Exception> onError) {
-        if (config.devMode()) {
-            log.info("[DEV MODE] Simulating rank change proposal: {} -> {}", memberRsn, newRank);
-            RankChange mock = new RankChange();
-            mock.setId("dev-rc-" + System.currentTimeMillis());
-            mock.setMemberRsn(memberRsn);
-            mock.setOldRank("member");
-            mock.setNewRank(newRank);
-            mock.setReason(reason);
-            onSuccess.accept(mock);
-            return;
-        }
-
         String json = gson.toJson(new ProposeRankChangeRequest(memberRsn, newRank, reason));
 
         Request request = new Request.Builder()
@@ -219,12 +194,6 @@ public class AdminApiService {
     public void actualizeRankChange(@Nonnull String rankChangeId,
                                      @Nonnull Consumer<Boolean> onSuccess,
                                      @Nonnull Consumer<Exception> onError) {
-        if (config.devMode()) {
-            log.info("[DEV MODE] Simulating rank change actualization: {}", rankChangeId);
-            onSuccess.accept(true);
-            return;
-        }
-
         Request request = new Request.Builder()
             .url(ApiConstants.BACKEND_BASE_URL + "/admin/rank-changes/" + rankChangeId + "/actualize")
             .addHeader("X-Member-Code", config.memberCode())
@@ -246,12 +215,6 @@ public class AdminApiService {
     public void updateAnnouncement(@Nonnull String message,
                                     @Nonnull Consumer<Boolean> onSuccess,
                                     @Nonnull Consumer<Exception> onError) {
-        if (config.devMode()) {
-            log.info("[DEV MODE] Simulating announcement update: {}", message);
-            onSuccess.accept(true);
-            return;
-        }
-
         String json = gson.toJson(new AnnouncementRequest(message));
 
         Request request = new Request.Builder()
