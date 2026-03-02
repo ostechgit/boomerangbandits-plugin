@@ -3,6 +3,7 @@ package com.boomerangbandits.api;
 import com.boomerangbandits.BoomerangBanditsConfig;
 import com.boomerangbandits.api.models.GroupSyncResponse;
 import com.boomerangbandits.api.models.PlayerUpdateResponse;
+import com.boomerangbandits.api.models.NameChangeEntry;
 import com.boomerangbandits.api.models.WomCompetition;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
@@ -37,6 +38,8 @@ public class WomApiService {
     private final OkHttpClient httpClient;
     private final Gson gson;
     private final BoomerangBanditsConfig config;
+    private volatile String authToken;
+    private volatile long accountHash = -1;
 
     @Inject
     public WomApiService(@Named("boomerang") OkHttpClient httpClient, Gson gson, BoomerangBanditsConfig config) {
@@ -248,6 +251,72 @@ public class WomApiService {
                 }
             }
         });
+    }
+
+    /**
+     * POST /api/wom/names/bulk
+     * <p>
+     * Submits detected name changes to the backend in bulk.
+     * Name changes are detected via RuneLite's NameableNameChanged event
+     * (friends/ignore list) following the WOM plugin pattern.
+     *
+     * @param nameChanges list of old→new name pairs to submit
+     * @param onSuccess   callback with response body on 200
+     * @param onError     callback with exception on failure
+     */
+    public void submitNameChanges(@Nonnull List<NameChangeEntry> nameChanges,
+                                  @Nonnull Consumer<String> onSuccess,
+                                  @Nonnull Consumer<Exception> onError) {
+        String memberCode = config.memberCode();
+        if (memberCode == null || memberCode.isEmpty()) {
+            onError.accept(new IllegalStateException("Not authenticated"));
+            return;
+        }
+
+        String json = gson.toJson(nameChanges);
+        log.info("Submitting {} name changes to backend", nameChanges.size());
+
+        Request request = new Request.Builder()
+                .url(ApiConstants.BACKEND_BASE_URL + "/wom/names/bulk")
+                .post(RequestBody.create(ApiConstants.JSON, json))
+                .header("X-Member-Code", memberCode)
+                .header("X-Account-Hash", String.valueOf(accountHash))
+                .header("X-Auth-Token", authToken != null ? authToken : "")
+                .header("Content-Type", "application/json")
+                .header("User-Agent", ApiConstants.USER_AGENT)
+                .build();
+
+        httpClient.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+                log.warn("Failed to submit name changes", e);
+                onError.accept(e);
+            }
+
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+                try (response) {
+                    String body = response.body() != null ? response.body().string() : "";
+                    if (response.isSuccessful()) {
+                        log.info("Name changes submitted successfully");
+                        onSuccess.accept(body);
+                    } else {
+                        log.warn("Name change submission returned HTTP {}: {}", response.code(), body);
+                        onError.accept(new IOException("HTTP " + response.code() + ": " + body));
+                    }
+                } catch (Exception e) {
+                    onError.accept(e);
+                }
+            }
+        });
+    }
+
+    public void setAuthToken(String authToken) {
+        this.authToken = authToken;
+    }
+
+    public void setAccountHash(long accountHash) {
+        this.accountHash = accountHash;
     }
 
     // ======================================================================
