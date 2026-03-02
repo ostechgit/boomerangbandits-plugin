@@ -1,6 +1,7 @@
 package com.boomerangbandits;
 
 import com.boomerangbandits.api.*;
+import com.boomerangbandits.api.models.NameChangeEntry;
 import com.boomerangbandits.api.WomApiService.SyncMember;
 import com.boomerangbandits.services.CompetitionScheduler;
 import com.boomerangbandits.services.ConfigSyncService;
@@ -13,6 +14,7 @@ import com.google.inject.Provides;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Client;
 import net.runelite.api.GameState;
+import net.runelite.api.Nameable;
 import net.runelite.api.clan.ClanSettings;
 import net.runelite.api.events.*;
 import net.runelite.client.callback.ClientThread;
@@ -28,6 +30,7 @@ import net.runelite.client.ui.NavigationButton;
 import net.runelite.client.ui.overlay.OverlayManager;
 import net.runelite.client.util.ImageUtil;
 import net.runelite.client.util.Text;
+import com.google.common.base.Strings;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
@@ -35,9 +38,11 @@ import javax.inject.Inject;
 import javax.swing.*;
 import java.awt.image.BufferedImage;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Base64;
+import java.util.*;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 @PluginDescriptor(
         name = "Boomerang Bandits",
@@ -107,6 +112,11 @@ public class BoomerangBanditsPlugin extends Plugin {
 
     // State
     private volatile boolean authenticated = false;
+
+    // Name change tracking
+    private final Map<String, String> nameChanges = new HashMap<>();
+    private final LinkedBlockingQueue<NameChangeEntry> nameChangeQueue = new LinkedBlockingQueue<>();
+    private boolean nameChangesSubmitted = false;
 
     @Override
     public void configure(Binder binder) {
@@ -297,6 +307,15 @@ public class BoomerangBanditsPlugin extends Plugin {
                     log.info("Manual group sync triggered via ::syncbandits");
                     triggerGroupSync();
                     break;
+
+                case "syncrsns":
+                    if (!authenticated) {
+                        log.debug("::syncrsns blocked — not authenticated");
+                        return;
+                    }
+                    log.info("Manual name change sync triggered via ::syncrsns");
+                    clientThread.invoke(this::submitNameChanges);
+                    break;
             }
         } catch (Exception e) {
             log.error("Error handling command", e);
@@ -376,6 +395,11 @@ public class BoomerangBanditsPlugin extends Plugin {
         clanApi.resetDegradedState();
         clanApi.clearAuthToken();
         authInterceptor.clearCredentials();
+        clanRankSyncService.setAuthToken(null);
+        clanRankSyncService.setAccountHash(-1);
+        womApi.setAuthToken(null);
+        womApi.setAccountHash(-1);
+        nameChangesSubmitted = false;
         clanValidator.reset(); // Reset clan validation cache
         SwingUtilities.invokeLater(() -> panel.onLogout());
     }
@@ -420,6 +444,12 @@ public class BoomerangBanditsPlugin extends Plugin {
         // Also keep ClanApiService in sync for its own internal state tracking
         clanApi.setAuthToken(authToken);
         clanApi.setAccountHash(accountHash);
+        // Keep ClanRankSyncService in sync for explicit header injection
+        clanRankSyncService.setAuthToken(authToken);
+        clanRankSyncService.setAccountHash(accountHash);
+        // Keep WomApiService in sync for name change submissions
+        womApi.setAuthToken(authToken);
+        womApi.setAccountHash(accountHash);
 
         final String finalAuthToken = authToken;
 
@@ -442,6 +472,11 @@ public class BoomerangBanditsPlugin extends Plugin {
 
                         // Start clan rank sync
                         clanRankSyncService.start(executor);
+
+                        // Start name change submission (every 30 min, 2 min initial delay)
+                        executor.scheduleAtFixedRate(
+                                () -> clientThread.invoke(BoomerangBanditsPlugin.this::submitNameChanges),
+                                2, 30, TimeUnit.MINUTES);
 
                         SwingUtilities.invokeLater(() -> {
                             panel.onAuthenticated();
@@ -545,6 +580,101 @@ public class BoomerangBanditsPlugin extends Plugin {
                     error -> log.error("[WOM] Group sync failed: {}", error.getMessage())
             );
         });
+    }
+
+    // ======================================================================
+    // NAME CHANGE DETECTION (friends/ignore list — WOM pattern)
+    // ======================================================================
+
+    /**
+     * Detects name changes from RuneLite's friends/ignore list.
+     * Follows the WOM RuneLite plugin's proven approach.
+     */
+    @Subscribe
+    public void onNameableNameChanged(NameableNameChanged event) {
+        final Nameable nameable = event.getNameable();
+        String name = nameable.getName();
+        String prev = nameable.getPrevName();
+
+        if (!isValidNameChange(prev, name)) {
+            return;
+        }
+
+        NameChangeEntry entry = new NameChangeEntry(
+                Text.toJagexName(prev), Text.toJagexName(name));
+
+        // Don't re-register the same change
+        String existing = nameChanges.get(entry.getNewName());
+        if (existing != null && existing.equals(entry.getOldName())) {
+            return;
+        }
+
+        nameChanges.put(entry.getNewName(), entry.getOldName());
+        nameChangeQueue.add(entry);
+        log.debug("[NameChange] Detected: {} -> {}", entry.getOldName(), entry.getNewName());
+    }
+
+    private boolean isValidNameChange(String prev, String curr) {
+        return !(Strings.isNullOrEmpty(prev)
+                || curr.equals(prev)
+                || prev.startsWith("[#")
+                || curr.startsWith("[#"));
+    }
+
+    /**
+     * Submits queued name changes to the backend.
+     * Called periodically via executor. Must run on client thread to access
+     * friends/ignore list for validation.
+     */
+    private void submitNameChanges() {
+        if (nameChangeQueue.isEmpty()) {
+            nameChangesSubmitted = true;
+            return;
+        }
+
+        if (!authenticated) {
+            return;
+        }
+
+        // Validate queue entries against current friends/ignore list
+        List<Nameable> friendIgnore = new ArrayList<>();
+        Nameable[] friends = client.getFriendContainer().getMembers();
+        Nameable[] ignored = client.getIgnoreContainer().getMembers();
+        if (friends != null) {
+            friendIgnore.addAll(Arrays.asList(friends));
+        }
+        if (ignored != null) {
+            friendIgnore.addAll(Arrays.asList(ignored));
+        }
+
+        List<NameChangeEntry> validChanges = friendIgnore.stream()
+                .filter(n -> isValidNameChange(n.getPrevName(), n.getName()))
+                .map(n -> new NameChangeEntry(Text.toJagexName(n.getPrevName()), Text.toJagexName(n.getName())))
+                .collect(Collectors.toList());
+
+        // Remove stale entries no longer in friends/ignore list
+        nameChangeQueue.removeIf(entry -> {
+            if (!validChanges.contains(entry)) {
+                nameChanges.remove(entry.getNewName(), entry.getOldName());
+                return true;
+            }
+            return false;
+        });
+
+        if (nameChangeQueue.isEmpty()) {
+            nameChangesSubmitted = true;
+            return;
+        }
+
+        List<NameChangeEntry> batch = new ArrayList<>(nameChangeQueue);
+        womApi.submitNameChanges(batch,
+                result -> {
+                    log.info("[NameChange] Submitted {} name changes to backend", batch.size());
+                    nameChangeQueue.clear();
+                    nameChangesSubmitted = true;
+                },
+                error -> log.warn("[NameChange] Failed to submit name changes: {}", error.getMessage())
+        );
     }
 
     // ======================================================================
