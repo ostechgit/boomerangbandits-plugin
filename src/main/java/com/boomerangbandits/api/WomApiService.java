@@ -7,6 +7,7 @@ import com.boomerangbandits.api.models.NameChangeEntry;
 import com.boomerangbandits.api.models.WomCompetition;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.*;
 
@@ -38,8 +39,10 @@ public class WomApiService {
     private final OkHttpClient httpClient;
     private final Gson gson;
     private final BoomerangBanditsConfig config;
-    private volatile String authToken;
-    private volatile long accountHash = -1;
+    @Setter
+	private volatile String authToken;
+    @Setter
+	private volatile long accountHash = -1;
 
     @Inject
     public WomApiService(@Named("boomerang") OkHttpClient httpClient, Gson gson, BoomerangBanditsConfig config) {
@@ -311,15 +314,7 @@ public class WomApiService {
         });
     }
 
-    public void setAuthToken(String authToken) {
-        this.authToken = authToken;
-    }
-
-    public void setAccountHash(long accountHash) {
-        this.accountHash = accountHash;
-    }
-
-    // ======================================================================
+	// ======================================================================
     // REQUEST DTOs (write endpoints)
     // ======================================================================
 
