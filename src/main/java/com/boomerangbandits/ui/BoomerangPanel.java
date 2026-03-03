@@ -9,6 +9,7 @@ import com.boomerangbandits.util.ClanValidator;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.client.callback.ClientThread;
+import net.runelite.client.config.ConfigManager;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.PluginPanel;
 import net.runelite.client.ui.FontManager;
@@ -59,6 +60,7 @@ public class BoomerangPanel extends PluginPanel {
     private final ClanValidator clanValidator;
     private final BoomerangBanditsConfig config;
     private final ClientThread clientThread;
+    private final ConfigManager configManager;
 
     private CardLayout cardLayout;
     private JPanel contentPanel;
@@ -82,7 +84,8 @@ public class BoomerangPanel extends PluginPanel {
             AdminPanel adminPanel,
             ClanValidator clanValidator,
             BoomerangBanditsConfig config,
-            ClientThread clientThread) {
+            ClientThread clientThread,
+            ConfigManager configManager) {
         super(false);
 
         this.homePanel = homePanel;
@@ -93,6 +96,7 @@ public class BoomerangPanel extends PluginPanel {
         this.clanValidator = clanValidator;
         this.config = config;
         this.clientThread = clientThread;
+        this.configManager = configManager;
 
         setLayout(new BorderLayout());
         setBackground(ColorScheme.DARK_GRAY_COLOR);
@@ -219,6 +223,79 @@ public class BoomerangPanel extends PluginPanel {
         line3.setFont(FontManager.getRunescapeSmallFont());
         line3.setAlignmentX(CENTER_ALIGNMENT);
         panel.add(line3);
+
+        panel.add(Box.createVerticalStrut(20));
+
+        // --- Member code inline input ---
+        JLabel inputLabel = new AntialiasedLabel("Member Code");
+        inputLabel.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
+        inputLabel.setFont(FontManager.getRunescapeSmallFont());
+        inputLabel.setAlignmentX(CENTER_ALIGNMENT);
+        panel.add(inputLabel);
+
+        panel.add(Box.createVerticalStrut(6));
+
+        JTextField memberCodeField = new JTextField();
+        memberCodeField.setFont(FontManager.getRunescapeSmallFont());
+        memberCodeField.setBackground(ColorScheme.DARKER_GRAY_COLOR);
+        memberCodeField.setForeground(Color.WHITE);
+        memberCodeField.setCaretColor(Color.WHITE);
+        memberCodeField.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(ColorScheme.MEDIUM_GRAY_COLOR, 1),
+                BorderFactory.createEmptyBorder(6, 8, 6, 8)
+        ));
+        memberCodeField.setMaximumSize(new Dimension(180, 30));
+        memberCodeField.setAlignmentX(CENTER_ALIGNMENT);
+        memberCodeField.setHorizontalAlignment(JTextField.CENTER);
+
+        // Pre-populate if member code already set
+        String existingCode = config.memberCode();
+        if (existingCode != null && !existingCode.isEmpty()) {
+            memberCodeField.setText(existingCode);
+        }
+
+        panel.add(memberCodeField);
+
+        panel.add(Box.createVerticalStrut(8));
+
+        // Save button — RS gold accent
+        JButton saveButton = new JButton("Save");
+        saveButton.setFont(FontManager.getRunescapeSmallFont());
+        saveButton.setForeground(Color.BLACK);
+        saveButton.setBackground(new Color(0xC8AA6E));
+        saveButton.setFocusPainted(false);
+        saveButton.setBorderPainted(false);
+        saveButton.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        saveButton.setMaximumSize(new Dimension(180, 28));
+        saveButton.setAlignmentX(CENTER_ALIGNMENT);
+
+        // Status label for save feedback
+        JLabel statusLabel = new AntialiasedLabel(" ");
+        statusLabel.setFont(FontManager.getRunescapeSmallFont());
+        statusLabel.setAlignmentX(CENTER_ALIGNMENT);
+        statusLabel.setVisible(false);
+
+        Runnable saveMemberCode = () -> {
+            String code = memberCodeField.getText().trim();
+            if (code.isEmpty()) {
+                statusLabel.setForeground(new Color(0xFF6B6B));
+                statusLabel.setText("Enter a member code");
+                statusLabel.setVisible(true);
+                return;
+            }
+            configManager.setConfiguration(BoomerangBanditsConfig.GROUP, "memberCode", code);
+            statusLabel.setForeground(new Color(0x4CAF50));
+            statusLabel.setText("Saved!");
+            statusLabel.setVisible(true);
+        };
+
+        saveButton.addActionListener(e -> saveMemberCode.run());
+        memberCodeField.addActionListener(e -> saveMemberCode.run());
+
+        panel.add(saveButton);
+
+        panel.add(Box.createVerticalStrut(6));
+        panel.add(statusLabel);
 
         panel.add(Box.createVerticalGlue());
 
@@ -367,6 +444,10 @@ public class BoomerangPanel extends PluginPanel {
     }
 
     public void refreshConfig() {
+        if (CARD_LOCKED.equals(activeCard)) {
+            log.debug("[BoomerangPanel] refreshConfig() skipped — panel locked");
+            return;
+        }
         log.debug("[BoomerangPanel] refreshConfig() called");
         homePanel.forceRefreshAll();
     }

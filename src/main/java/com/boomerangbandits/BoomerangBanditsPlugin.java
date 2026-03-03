@@ -281,8 +281,11 @@ public class BoomerangBanditsPlugin extends Plugin {
             }
 
             SwingUtilities.invokeLater(() -> {
-                panel.refreshConfig();
-                // Update announcements if changed
+                // Only refresh panel data if authenticated — avoids wasted API calls on startup
+                if (authenticated) {
+                    panel.refreshConfig();
+                }
+                // Announcements are local config — safe to update without auth
                 panel.getHomePanel().updateAnnouncements(parseAnnouncements());
 
                 // Update admin visibility if admin rank threshold changed

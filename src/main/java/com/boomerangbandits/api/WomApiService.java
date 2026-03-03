@@ -58,6 +58,12 @@ public class WomApiService {
      */
     public void fetchCompetitions(@Nonnull Consumer<List<WomCompetition>> onSuccess,
                                   @Nonnull Consumer<Exception> onError) {
+        String memberCode = config.memberCode();
+        if (memberCode == null || memberCode.isEmpty()) {
+            onError.accept(new IllegalStateException("Not authenticated"));
+            return;
+        }
+
         String url = ApiConstants.BACKEND_BASE_URL + "/wom/competitions?active_only=true";
         log.debug("Fetching competitions from backend API: {}", url);
         Request request = buildRequest(url);
@@ -100,6 +106,12 @@ public class WomApiService {
     public void fetchCompetitionDetails(int competitionId,
                                         @Nonnull Consumer<WomCompetition> onSuccess,
                                         @Nonnull Consumer<Exception> onError) {
+        String memberCode = config.memberCode();
+        if (memberCode == null || memberCode.isEmpty()) {
+            onError.accept(new IllegalStateException("Not authenticated"));
+            return;
+        }
+
         String url = ApiConstants.BACKEND_BASE_URL + "/wom/competitions/" + competitionId;
         Request request = buildRequest(url);
 

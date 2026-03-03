@@ -82,19 +82,25 @@ public class ClanApiService {
      * @param onSuccess   callback with AuthResponse on success
      * @param onError     callback with error message on failure
      */
-    public void verifyMember(long accountHash, @Nonnull String rsn, @Nonnull String authToken,
+    public void verifyMember(long accountHash, @Nonnull String rsn, String authToken,
                              @Nonnull Consumer<AuthResponse> onSuccess,
                              @Nonnull Consumer<String> onError) {
         String memberCode = config.memberCode();
         String json = gson.toJson(new VerifyRequest(rsn, authToken, memberCode));
 
-        Request request = new Request.Builder()
+        Request.Builder builder = new Request.Builder()
                 .url(ApiConstants.BACKEND_BASE_URL + "/auth/verify")
                 .header("X-Account-Hash", String.valueOf(accountHash))
-                .header("X-Member-Code", memberCode)
-                .header("X-Auth-Token", authToken)
-                .post(RequestBody.create(ApiConstants.JSON, json))
-                .build();
+                .post(RequestBody.create(ApiConstants.JSON, json));
+
+        if (memberCode != null && !memberCode.isEmpty()) {
+            builder.header("X-Member-Code", memberCode);
+        }
+        if (authToken != null && !authToken.isEmpty()) {
+            builder.header("X-Auth-Token", authToken);
+        }
+
+        Request request = builder.build();
 
         executeAsync(request, AuthResponse.class, onSuccess, onError);
     }
