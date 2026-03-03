@@ -32,7 +32,7 @@ dependencies {
 }
 
 group = 'com.boomerangbandits'
-version = '1.0.0'
+version = '1.1.0'
 
 // Allow overriding the backend URL at build time:
 //   ./gradlew run -PbackendUrl=https://boomerangbingo-staging.up.railway.app/api
