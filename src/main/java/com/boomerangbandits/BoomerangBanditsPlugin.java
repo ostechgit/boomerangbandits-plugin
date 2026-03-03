@@ -9,6 +9,8 @@ import com.boomerangbandits.services.EventAttendanceTracker;
 import com.boomerangbandits.ui.BoomerangPanel;
 import com.boomerangbandits.ui.EventOverlay;
 import com.boomerangbandits.util.ClanValidator;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import com.google.inject.Binder;
 import com.google.inject.Provides;
 import lombok.extern.slf4j.Slf4j;
@@ -105,6 +107,8 @@ public class BoomerangBanditsPlugin extends Plugin {
     // Phase 6: Overlay
     @Inject
     private EventOverlay eventOverlay;
+    @Inject
+    private Gson gson;
 
     // UI
     private BoomerangPanel panel;
@@ -117,6 +121,23 @@ public class BoomerangBanditsPlugin extends Plugin {
     private final Map<String, String> nameChanges = new HashMap<>();
     private final LinkedBlockingQueue<NameChangeEntry> nameChangeQueue = new LinkedBlockingQueue<>();
     private boolean nameChangesSubmitted = false;
+
+    /**
+     * Parse the announcements JSON array from config into a List.
+     */
+    private List<String> parseAnnouncements() {
+        try {
+            String json = config.announcements();
+            if (json == null || json.isEmpty()) {
+                return Collections.emptyList();
+            }
+            List<String> result = gson.fromJson(json, new TypeToken<List<String>>(){}.getType());
+            return result != null ? result : Collections.emptyList();
+        } catch (Exception e) {
+            log.warn("Failed to parse announcements config: {}", e.getMessage());
+            return Collections.emptyList();
+        }
+    }
 
     @Override
     public void configure(Binder binder) {
@@ -261,8 +282,8 @@ public class BoomerangBanditsPlugin extends Plugin {
 
             SwingUtilities.invokeLater(() -> {
                 panel.refreshConfig();
-                // Update announcement if changed
-                panel.getHomePanel().updateAnnouncement(config.announcementMessage());
+                // Update announcements if changed
+                panel.getHomePanel().updateAnnouncements(parseAnnouncements());
 
                 // Update admin visibility if admin rank threshold changed
                 if (event.getKey().equals("adminRankThreshold")) {
@@ -480,7 +501,7 @@ public class BoomerangBanditsPlugin extends Plugin {
 
                         SwingUtilities.invokeLater(() -> {
                             panel.onAuthenticated();
-                            panel.getHomePanel().updateAnnouncement(config.announcementMessage());
+                            panel.getHomePanel().updateAnnouncements(parseAnnouncements());
                             // Update admin visibility after authentication
                             panel.updateAdminVisibility();
                         });

@@ -26,7 +26,7 @@ import java.util.List;
  * Displays:
  * - Player greeting
  * - Connection status
- * - Announcement (from remote config, if any)
+ * - Announcements (from remote config, if any)
  * - Active competition summary (from WOM cache)
  */
 @Slf4j
@@ -46,7 +46,8 @@ public class HomePanel extends JPanel {
     private JLabel clanPointsLabel;
     private Badge rankBadge;
     private JLabel statusLabel;
-    private JLabel announcementLabel;
+    private JPanel announcementSection;
+    private JPanel announcementContent;
     private JPanel competitionSection;
     private CountdownLabel competitionCountdown;
     private JPanel clanActivitySection;
@@ -119,13 +120,38 @@ public class HomePanel extends JPanel {
     }
 
     private void buildAnnouncementSection() {
-        announcementLabel = new JLabel();
-        announcementLabel.setForeground(new Color(0xFFC107)); // amber
-        announcementLabel.setFont(UIConstants.deriveFont(announcementLabel.getFont(), UIConstants.FONT_SIZE_NORMAL));
-        announcementLabel.setBorder(new EmptyBorder(0, 0, UIConstants.PADDING_LARGE, 0));
-        announcementLabel.setAlignmentX(LEFT_ALIGNMENT);
-        announcementLabel.setVisible(false);
-        add(announcementLabel);
+        announcementSection = new JPanel();
+        announcementSection.setLayout(new BoxLayout(announcementSection, BoxLayout.Y_AXIS));
+        announcementSection.setBackground(ColorScheme.DARKER_GRAY_COLOR);
+        announcementSection.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(0xFFC107)), // amber border
+                new EmptyBorder(
+                        UIConstants.PADDING_STANDARD,
+                        UIConstants.PADDING_STANDARD,
+                        UIConstants.PADDING_STANDARD,
+                        UIConstants.PADDING_STANDARD
+                )
+        ));
+        announcementSection.setAlignmentX(LEFT_ALIGNMENT);
+        announcementSection.setMaximumSize(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE));
+        announcementSection.setVisible(false);
+
+        JLabel header = new AntialiasedLabel("Announcements");
+        header.setForeground(new Color(0xFFC107));
+        header.setFont(UIConstants.deriveFont(header.getFont(), UIConstants.FONT_SIZE_MEDIUM, UIConstants.FONT_BOLD));
+        header.setAlignmentX(LEFT_ALIGNMENT);
+        announcementSection.add(header);
+
+        announcementSection.add(Box.createVerticalStrut(UIConstants.SPACING_SMALL));
+
+        announcementContent = new JPanel();
+        announcementContent.setLayout(new BoxLayout(announcementContent, BoxLayout.Y_AXIS));
+        announcementContent.setBackground(ColorScheme.DARKER_GRAY_COLOR);
+        announcementContent.setAlignmentX(LEFT_ALIGNMENT);
+        announcementSection.add(announcementContent);
+
+        add(announcementSection);
+        add(Box.createVerticalStrut(UIConstants.SPACING_ITEM));
     }
 
     private void buildChallengeSection() {
@@ -307,22 +333,55 @@ public class HomePanel extends JPanel {
     }
 
     /**
-     * Update announcement from remote config.
-     * Pass null or empty to hide.
+     * Update announcements from remote config.
+     * Pass null or empty list to hide the section.
      */
-    public void updateAnnouncement(String message) {
+    public void updateAnnouncements(List<String> messages) {
         SwingUtilities.invokeLater(() -> {
-            if (message != null && !message.isEmpty()) {
-                // Escape HTML special characters before wrapping in <html> tags to prevent
-                // injection of arbitrary HTML from backend-supplied announcement content (S1).
-                String sanitized = message.replace("&", "&amp;")
-                        .replace("<", "&lt;")
-                        .replace(">", "&gt;");
-                announcementLabel.setText("<html>" + sanitized + "</html>");
-                announcementLabel.setVisible(true);
-            } else {
-                announcementLabel.setVisible(false);
+            announcementContent.removeAll();
+
+            if (messages == null || messages.isEmpty()) {
+                announcementSection.setVisible(false);
+                return;
             }
+
+            for (String message : messages) {
+                if (message == null || message.trim().isEmpty()) {
+                    continue;
+                }
+
+                if (announcementContent.getComponentCount() > 0) {
+                    announcementContent.add(Box.createVerticalStrut(UIConstants.SPACING_SMALL));
+                }
+
+                // Wrap each announcement in a card with an amber left-border indicator.
+                // Unicode bullets don't render in RuneLite's default font, so we use
+                // structural separation (matte border) like other RuneLite plugins.
+                JPanel itemPanel = new JPanel(new BorderLayout());
+                itemPanel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
+                itemPanel.setBorder(BorderFactory.createMatteBorder(0, 3, 0, 0, new Color(0xFFC107)));
+                itemPanel.setAlignmentX(LEFT_ALIGNMENT);
+                itemPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE));
+
+                JTextArea textArea = new JTextArea(message);
+                textArea.setEditable(false);
+                textArea.setFocusable(false);
+                textArea.setLineWrap(true);
+                textArea.setWrapStyleWord(true);
+                textArea.setColumns(0);
+                textArea.setBackground(ColorScheme.DARKER_GRAY_COLOR);
+                textArea.setForeground(new Color(0xFFC107)); // amber
+                textArea.setFont(UIConstants.deriveFont(new JLabel().getFont(), UIConstants.FONT_SIZE_NORMAL));
+                textArea.setBorder(new EmptyBorder(2, UIConstants.PADDING_SMALL, 2, 0));
+
+                itemPanel.add(textArea, BorderLayout.CENTER);
+                announcementContent.add(itemPanel);
+            }
+
+            boolean hasContent = announcementContent.getComponentCount() > 0;
+            announcementSection.setVisible(hasContent);
+            announcementSection.revalidate();
+            announcementSection.repaint();
         });
     }
 

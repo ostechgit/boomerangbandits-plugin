@@ -3,6 +3,7 @@ package com.boomerangbandits.services;
 import com.boomerangbandits.BoomerangBanditsConfig;
 import com.boomerangbandits.api.ClanApiService;
 import com.boomerangbandits.api.models.PluginConfigResponse;
+import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.client.config.ConfigManager;
 
@@ -10,6 +11,8 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -34,6 +37,8 @@ public class ConfigSyncService {
     private BoomerangBanditsConfig config;
     @Inject
     private ConfigManager configManager;
+    @Inject
+    private Gson gson;
 
     private ScheduledFuture<?> syncTask;
 
@@ -98,6 +103,11 @@ public class ConfigSyncService {
         setIfChanged("rollCallActive", String.valueOf(remoteConfig.isRollCallActive()));
         setIfChanged("websiteUrl", remoteConfig.getWebsiteUrl());
         setIfChanged("discordUrl", remoteConfig.getDiscordUrl());
+
+        // Serialize announcements list to JSON for config storage
+        List<String> announcements = remoteConfig.getAnnouncements();
+        setIfChanged("announcements", gson.toJson(
+                announcements != null ? announcements : Collections.emptyList()));
 
         // Store the Dink dynamic config URL in our own config so the UI can display it.
         // Users can copy it from the Clan Hub panel and paste it into Dink's settings manually.

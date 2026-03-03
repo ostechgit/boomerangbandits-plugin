@@ -124,6 +124,14 @@ public interface BoomerangBanditsConfig extends Config {
     default String announcementMessage() { return ""; }
 
     @ConfigItem(
+        keyName = "announcements",
+        name = "",
+        description = "",
+        hidden = true
+    )
+    default String announcements() { return "[]"; }
+
+    @ConfigItem(
         keyName = "rollCallActive",
         name = "",
         description = "",

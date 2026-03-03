@@ -1,6 +1,7 @@
 package com.boomerangbandits.api.models;
 
 import com.google.gson.annotations.SerializedName;
+import java.util.List;
 import lombok.Data;
 
 /**
@@ -15,6 +16,7 @@ public class PluginConfigResponse {
     private String clanName;
     private int minimumClanRank;
     private String announcementMessage;
+    private List<String> announcements;
     private boolean rollCallActive;
     private String activeRollCallId;
     private boolean sotwActive;
