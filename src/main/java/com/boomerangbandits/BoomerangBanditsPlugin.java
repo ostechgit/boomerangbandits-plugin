@@ -116,6 +116,7 @@ public class BoomerangBanditsPlugin extends Plugin {
 
     // State
     private volatile boolean authenticated = false;
+    private volatile boolean authenticating = false;
 
     // Name change tracking
     private final Map<String, String> nameChanges = new HashMap<>();
@@ -391,7 +392,7 @@ public class BoomerangBanditsPlugin extends Plugin {
     }
 
     private void attemptAuthentication() {
-        if (authenticated) {
+        if (authenticated || authenticating) {
             return;
         }
 
@@ -408,13 +409,19 @@ public class BoomerangBanditsPlugin extends Plugin {
                 ? client.getLocalPlayer().getName()
                 : "Unknown";
 
-        SwingUtilities.invokeLater(() -> panel.onLogin(playerName));
+        SwingUtilities.invokeLater(() -> {
+            panel.onLogin(playerName);
+            // Show member code input now that clan validation passed
+            panel.showMemberCodeInput();
+        });
 
+        authenticating = true;
         authenticate();
     }
 
     private void handleLogout() {
         authenticated = false;
+        authenticating = false;
         configSyncService.stop();
         clanApi.resetDegradedState();
         clanApi.clearAuthToken();
@@ -430,12 +437,14 @@ public class BoomerangBanditsPlugin extends Plugin {
 
     private void authenticate() {
         if (client.getLocalPlayer() == null) {
+            authenticating = false;
             return;
         }
 
         long accountHash = client.getAccountHash();
         if (accountHash == -1) {
-            log.warn("[Auth] Skipping authentication — account hash not yet available");
+            log.warn("[Auth] Skipping authentication \u2014 account hash not yet available");
+            authenticating = false;
             return;
         }
         String rsn = client.getLocalPlayer().getName();
@@ -482,6 +491,7 @@ public class BoomerangBanditsPlugin extends Plugin {
                 authResponse -> {
                     if (authResponse.isSuccess()) {
                         authenticated = true;
+                        authenticating = false;
                         log.info("Authenticated as: {} (code: {}...)",
                                 rsn,
                                 authResponse.getMemberCode().substring(0,
@@ -512,17 +522,20 @@ public class BoomerangBanditsPlugin extends Plugin {
                         // Trigger player update now that we're authenticated — must run on client thread
                         clientThread.invoke(() -> triggerPlayerUpdate(rsn, accountHash));
                     } else if (authResponse.isPending()) {
+                        authenticating = false;
                         // Backend created the member row but hasn't issued a code yet.
                         // Admin will DM the member code — player must enter it in settings.
-                        log.info("[Auth] Member registered as pending — awaiting member code from admin");
+                        log.info("[Auth] Member registered as pending \u2014 awaiting member code from admin");
                         SwingUtilities.invokeLater(() ->
                                 panel.getHomePanel().updateStatus(
                                         "Registered! Awaiting member code from admin", ColorScheme.LIGHT_GRAY_COLOR));
                     } else {
+                        authenticating = false;
                         log.warn("Authentication failed: {}", authResponse.getError());
                     }
                 },
                 error -> {
+                    authenticating = false;
                     log.warn("Authentication error: {}", error);
                     if (clanApi.isDegraded()) {
                         SwingUtilities.invokeLater(() -> panel.onDegraded());

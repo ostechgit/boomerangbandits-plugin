@@ -67,6 +67,7 @@ public class BoomerangPanel extends PluginPanel {
     private JPanel navBar;
     private final List<NavButton> navButtons = new ArrayList<>();
     private JButton adminButton;
+    private JPanel memberCodeInputSection;
     /**
      * -- GETTER --
      * Get the active card identifier.
@@ -226,14 +227,20 @@ public class BoomerangPanel extends PluginPanel {
 
         panel.add(Box.createVerticalStrut(20));
 
-        // --- Member code inline input ---
+        // --- Member code inline input (hidden until logged in + in CC) ---
+        memberCodeInputSection = new JPanel();
+        memberCodeInputSection.setLayout(new BoxLayout(memberCodeInputSection, BoxLayout.Y_AXIS));
+        memberCodeInputSection.setBackground(ColorScheme.DARK_GRAY_COLOR);
+        memberCodeInputSection.setAlignmentX(CENTER_ALIGNMENT);
+        memberCodeInputSection.setVisible(false);
+
         JLabel inputLabel = new AntialiasedLabel("Member Code");
         inputLabel.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
         inputLabel.setFont(FontManager.getRunescapeSmallFont());
         inputLabel.setAlignmentX(CENTER_ALIGNMENT);
-        panel.add(inputLabel);
+        memberCodeInputSection.add(inputLabel);
 
-        panel.add(Box.createVerticalStrut(6));
+        memberCodeInputSection.add(Box.createVerticalStrut(6));
 
         JTextField memberCodeField = new JTextField();
         memberCodeField.setFont(FontManager.getRunescapeSmallFont());
@@ -247,16 +254,9 @@ public class BoomerangPanel extends PluginPanel {
         memberCodeField.setMaximumSize(new Dimension(180, 30));
         memberCodeField.setAlignmentX(CENTER_ALIGNMENT);
         memberCodeField.setHorizontalAlignment(JTextField.CENTER);
+        memberCodeInputSection.add(memberCodeField);
 
-        // Pre-populate if member code already set
-        String existingCode = config.memberCode();
-        if (existingCode != null && !existingCode.isEmpty()) {
-            memberCodeField.setText(existingCode);
-        }
-
-        panel.add(memberCodeField);
-
-        panel.add(Box.createVerticalStrut(8));
+        memberCodeInputSection.add(Box.createVerticalStrut(8));
 
         // Save button — RS gold accent
         JButton saveButton = new JButton("Save");
@@ -292,10 +292,11 @@ public class BoomerangPanel extends PluginPanel {
         saveButton.addActionListener(e -> saveMemberCode.run());
         memberCodeField.addActionListener(e -> saveMemberCode.run());
 
-        panel.add(saveButton);
+        memberCodeInputSection.add(saveButton);
+        memberCodeInputSection.add(Box.createVerticalStrut(6));
+        memberCodeInputSection.add(statusLabel);
 
-        panel.add(Box.createVerticalStrut(6));
-        panel.add(statusLabel);
+        panel.add(memberCodeInputSection);
 
         panel.add(Box.createVerticalGlue());
 
@@ -432,6 +433,7 @@ public class BoomerangPanel extends PluginPanel {
         activeCard = CARD_LOCKED;
         if (navBar != null) navBar.setVisible(false);
         if (stickyFooter != null) stickyFooter.setVisible(false);
+        if (memberCodeInputSection != null) memberCodeInputSection.setVisible(false);
     }
 
     /**
@@ -463,4 +465,16 @@ public class BoomerangPanel extends PluginPanel {
         });
     }
 
+    /**
+     * Show the member code input on the locked screen.
+     * Call after clan validation passes but before authentication completes,
+     * so the player can enter their code without going to config.
+     */
+    public void showMemberCodeInput() {
+        if (memberCodeInputSection != null) {
+            memberCodeInputSection.setVisible(true);
+            memberCodeInputSection.revalidate();
+            memberCodeInputSection.repaint();
+        }
+    }
 }
