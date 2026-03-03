@@ -4,9 +4,12 @@ import com.boomerangbandits.api.AdminApiService;
 import com.boomerangbandits.api.models.AttendanceEntry;
 import com.boomerangbandits.api.models.RankChange;
 import com.boomerangbandits.services.EventAttendanceTracker;
+import com.boomerangbandits.ui.components.AntialiasedLabel;
+import com.boomerangbandits.ui.components.AntialiasedTextArea;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.client.ui.ColorScheme;
+import net.runelite.client.ui.FontManager;
 
 import javax.inject.Inject;
 import javax.swing.*;
@@ -44,7 +47,7 @@ public class AdminPanel extends JPanel implements Scrollable {
     private JButton refreshRankChangesButton;
 
     // Announcement section
-    private JTextArea announcementTextArea;
+    private AntialiasedTextArea announcementTextArea;
     private JButton updateAnnouncementButton;
     private JLabel announcementResultLabel;
 
@@ -65,9 +68,9 @@ public class AdminPanel extends JPanel implements Scrollable {
         setBackground(ColorScheme.DARK_GRAY_COLOR);
         setBorder(new EmptyBorder(8, 8, 8, 8));
 
-        JLabel title = new JLabel("Admin Panel");
+        JLabel title = new AntialiasedLabel("Admin Panel");
         title.setForeground(Color.WHITE);
-        title.setFont(title.getFont().deriveFont(Font.BOLD, 14f));
+        title.setFont(FontManager.getRunescapeBoldFont());
         title.setAlignmentX(LEFT_ALIGNMENT);
         title.setBorder(new EmptyBorder(0, 0, 8, 0));
         add(title);
@@ -104,9 +107,9 @@ public class AdminPanel extends JPanel implements Scrollable {
         c.gridy = 0;
         c.insets = new Insets(0, 0, 0, 4);
 
-        JLabel nameLabel = new JLabel("Event name:");
+        JLabel nameLabel = new AntialiasedLabel("Event name:");
         nameLabel.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
-        nameLabel.setFont(nameLabel.getFont().deriveFont(11f));
+        nameLabel.setFont(FontManager.getRunescapeSmallFont());
         c.gridx = 0;
         c.weightx = 0;
         c.fill = GridBagConstraints.NONE;
@@ -140,9 +143,9 @@ public class AdminPanel extends JPanel implements Scrollable {
         tc.gridy = 0;
         tc.insets = new Insets(0, 0, 0, 4);
 
-        JLabel thresholdLabel = new JLabel("Min. time (min):");
+        JLabel thresholdLabel = new AntialiasedLabel("Min. time (min):");
         thresholdLabel.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
-        thresholdLabel.setFont(thresholdLabel.getFont().deriveFont(11f));
+        thresholdLabel.setFont(FontManager.getRunescapeSmallFont());
         tc.gridx = 0;
         tc.weightx = 1.0;
         tc.fill = GridBagConstraints.HORIZONTAL;
@@ -162,9 +165,9 @@ public class AdminPanel extends JPanel implements Scrollable {
         section.add(javax.swing.Box.createVerticalStrut(6));
 
         // Live status label
-        attendanceStatusLabel = new JLabel("No event running");
+        attendanceStatusLabel = new AntialiasedLabel("No event running");
         attendanceStatusLabel.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
-        attendanceStatusLabel.setFont(attendanceStatusLabel.getFont().deriveFont(10f));
+        attendanceStatusLabel.setFont(FontManager.getRunescapeSmallFont());
         addLabelComponent(section, attendanceStatusLabel);
 
         section.add(javax.swing.Box.createVerticalStrut(4));
@@ -184,8 +187,8 @@ public class AdminPanel extends JPanel implements Scrollable {
 
         section.add(javax.swing.Box.createVerticalStrut(2));
 
-        attendanceResultLabel = new JLabel(" ");
-        attendanceResultLabel.setFont(attendanceResultLabel.getFont().deriveFont(10f));
+        attendanceResultLabel = new AntialiasedLabel(" ");
+        attendanceResultLabel.setFont(FontManager.getRunescapeSmallFont());
         addLabelComponent(section, attendanceResultLabel);
 
         return section;
@@ -281,9 +284,9 @@ public class AdminPanel extends JPanel implements Scrollable {
         c.insets = new Insets(2, 0, 2, 4);
 
         // RSN field
-        JLabel rsnLbl = new JLabel("RSN:");
+        JLabel rsnLbl = new AntialiasedLabel("RSN:");
         rsnLbl.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
-        rsnLbl.setFont(rsnLbl.getFont().deriveFont(11f));
+        rsnLbl.setFont(FontManager.getRunescapeSmallFont());
         c.gridx = 0;
         c.gridy = 0;
         c.weightx = 0;
@@ -302,9 +305,9 @@ public class AdminPanel extends JPanel implements Scrollable {
         proposeForm.add(proposeRsnField, c);
 
         // New rank field
-        JLabel rankLbl = new JLabel("New rank:");
+        JLabel rankLbl = new AntialiasedLabel("New rank:");
         rankLbl.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
-        rankLbl.setFont(rankLbl.getFont().deriveFont(11f));
+        rankLbl.setFont(FontManager.getRunescapeSmallFont());
         c.gridx = 0;
         c.gridy = 1;
         c.weightx = 0;
@@ -324,9 +327,9 @@ public class AdminPanel extends JPanel implements Scrollable {
         proposeForm.add(proposeRankField, c);
 
         // Reason field
-        JLabel reasonLbl = new JLabel("Reason:");
+        JLabel reasonLbl = new AntialiasedLabel("Reason:");
         reasonLbl.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
-        reasonLbl.setFont(reasonLbl.getFont().deriveFont(11f));
+        reasonLbl.setFont(FontManager.getRunescapeSmallFont());
         c.gridx = 0;
         c.gridy = 2;
         c.weightx = 0;
@@ -348,8 +351,8 @@ public class AdminPanel extends JPanel implements Scrollable {
         section.add(proposeForm);
         section.add(javax.swing.Box.createVerticalStrut(4));
 
-        JLabel proposeResultLabel = new JLabel(" ");
-        proposeResultLabel.setFont(proposeResultLabel.getFont().deriveFont(10f));
+        JLabel proposeResultLabel = new AntialiasedLabel(" ");
+        proposeResultLabel.setFont(FontManager.getRunescapeSmallFont());
         addLabelComponent(section, proposeResultLabel);
 
         JButton proposeBtn = makeButton("Propose Rank Change");
@@ -393,7 +396,7 @@ public class AdminPanel extends JPanel implements Scrollable {
         rankChangesContainer.setAlignmentX(LEFT_ALIGNMENT);
         rankChangesContainer.setMaximumSize(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE));
 
-        JLabel emptyLabel = new JLabel("Click refresh to load");
+        JLabel emptyLabel = new AntialiasedLabel("Click refresh to load");
         emptyLabel.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
         rankChangesContainer.add(emptyLabel);
         section.add(rankChangesContainer);
@@ -417,7 +420,7 @@ public class AdminPanel extends JPanel implements Scrollable {
                 error -> SwingUtilities.invokeLater(() -> {
                     refreshRankChangesButton.setEnabled(true);
                     rankChangesContainer.removeAll();
-                    JLabel errLabel = new JLabel(error instanceof SecurityException ? "Access denied" : "Failed to load");
+                    JLabel errLabel = new AntialiasedLabel(error instanceof SecurityException ? "Access denied" : "Failed to load");
                     errLabel.setForeground(new Color(0xFF5252));
                     rankChangesContainer.add(errLabel);
                     rankChangesContainer.revalidate();
@@ -428,7 +431,7 @@ public class AdminPanel extends JPanel implements Scrollable {
     private void updateRankChangesList(List<RankChange> changes) {
         rankChangesContainer.removeAll();
         if (changes == null || changes.isEmpty()) {
-            JLabel empty = new JLabel("No pending rank changes");
+            JLabel empty = new AntialiasedLabel("No pending rank changes");
             empty.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
             rankChangesContainer.add(empty);
         } else {
@@ -458,22 +461,22 @@ public class AdminPanel extends JPanel implements Scrollable {
         info.setLayout(new BoxLayout(info, BoxLayout.Y_AXIS));
         info.setBackground(ColorScheme.DARK_GRAY_COLOR);
 
-        JLabel rsnLabel = new JLabel(change.getMemberRsn());
+        JLabel rsnLabel = new AntialiasedLabel(change.getMemberRsn());
         rsnLabel.setForeground(Color.WHITE);
-        rsnLabel.setFont(rsnLabel.getFont().deriveFont(Font.BOLD, 12f));
+        rsnLabel.setFont(FontManager.getRunescapeBoldFont());
         rsnLabel.setMaximumSize(new Dimension(Integer.MAX_VALUE, rsnLabel.getPreferredSize().height));
         info.add(rsnLabel);
 
-        JLabel rankLabel = new JLabel(change.getOldRank() + " -> " + change.getNewRank());
+        JLabel rankLabel = new AntialiasedLabel(change.getOldRank() + " -> " + change.getNewRank());
         rankLabel.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
-        rankLabel.setFont(rankLabel.getFont().deriveFont(10f));
+        rankLabel.setFont(FontManager.getRunescapeSmallFont());
         rankLabel.setMaximumSize(new Dimension(Integer.MAX_VALUE, rankLabel.getPreferredSize().height));
         info.add(rankLabel);
 
         if (change.getRequestedBy() != null && !change.getRequestedBy().isEmpty()) {
-            JLabel byLabel = new JLabel("by " + change.getRequestedBy());
+            JLabel byLabel = new AntialiasedLabel("by " + change.getRequestedBy());
             byLabel.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
-            byLabel.setFont(byLabel.getFont().deriveFont(10f));
+            byLabel.setFont(FontManager.getRunescapeSmallFont());
             byLabel.setMaximumSize(new Dimension(Integer.MAX_VALUE, byLabel.getPreferredSize().height));
             info.add(byLabel);
         }
@@ -520,7 +523,7 @@ public class AdminPanel extends JPanel implements Scrollable {
         addLabelRow(section, "<html>Set the message shown to all clan members on login.</html>", 10f);
         section.add(javax.swing.Box.createVerticalStrut(4));
 
-        announcementTextArea = new JTextArea(3, 0);
+        announcementTextArea = new AntialiasedTextArea(3, 0);
         announcementTextArea.setBackground(ColorScheme.DARK_GRAY_COLOR);
         announcementTextArea.setForeground(Color.WHITE);
         announcementTextArea.setCaretColor(Color.WHITE);
@@ -542,8 +545,8 @@ public class AdminPanel extends JPanel implements Scrollable {
 
         section.add(javax.swing.Box.createVerticalStrut(2));
 
-        announcementResultLabel = new JLabel(" ");
-        announcementResultLabel.setFont(announcementResultLabel.getFont().deriveFont(10f));
+        announcementResultLabel = new AntialiasedLabel(" ");
+        announcementResultLabel.setFont(FontManager.getRunescapeSmallFont());
         addLabelComponent(section, announcementResultLabel);
 
         return section;
@@ -602,8 +605,8 @@ public class AdminPanel extends JPanel implements Scrollable {
 
         section.add(javax.swing.Box.createVerticalStrut(2));
 
-        syncRosterResultLabel = new JLabel(" ");
-        syncRosterResultLabel.setFont(syncRosterResultLabel.getFont().deriveFont(10f));
+        syncRosterResultLabel = new AntialiasedLabel(" ");
+        syncRosterResultLabel.setFont(FontManager.getRunescapeSmallFont());
         addLabelComponent(section, syncRosterResultLabel);
 
         return section;
@@ -629,9 +632,9 @@ public class AdminPanel extends JPanel implements Scrollable {
         // Rule 4: cap width so BoxLayout parent never stretches us wider than the viewport
         section.setMaximumSize(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE));
 
-        JLabel header = new JLabel(title);
+        JLabel header = new AntialiasedLabel(title);
         header.setForeground(Color.WHITE);
-        header.setFont(header.getFont().deriveFont(Font.BOLD, 12f));
+        header.setFont(FontManager.getRunescapeBoldFont());
         header.setAlignmentX(LEFT_ALIGNMENT);
         header.setBorder(new EmptyBorder(0, 0, 6, 0));
         section.add(header);
@@ -652,9 +655,9 @@ public class AdminPanel extends JPanel implements Scrollable {
      * Adds an HTML instruction label to a section panel.
      */
     private void addLabelRow(JPanel parent, String html, float fontSize) {
-        JLabel label = new JLabel(html);
+        JLabel label = new AntialiasedLabel(html);
         label.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
-        label.setFont(label.getFont().deriveFont(fontSize));
+        label.setFont(FontManager.getRunescapeSmallFont());
         label.setAlignmentX(LEFT_ALIGNMENT);
         // Rule 4: must constrain width so BoxLayout doesn't let it overflow
         label.setMaximumSize(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE));

@@ -3,19 +3,23 @@ package com.boomerangbandits.ui.components;
 import javax.swing.*;
 
 /**
- * A JLabel subclass used throughout the plugin for semantic consistency.
+ * A JTextArea subclass used throughout the plugin for semantic consistency.
  * <p>
  * Text clarity is achieved by using RuneLite's built-in FontManager fonts
  * (getRunescapeSmallFont, getRunescapeBoldFont) rather than rendering hints.
  * This matches the pattern used by all production RuneLite plugins.
  */
-public class AntialiasedLabel extends JLabel {
+public class AntialiasedTextArea extends JTextArea {
 
-    public AntialiasedLabel() {
+    public AntialiasedTextArea() {
         super();
     }
 
-    public AntialiasedLabel(String text) {
+    public AntialiasedTextArea(String text) {
         super(text);
+    }
+
+    public AntialiasedTextArea(int rows, int columns) {
+        super(rows, columns);
     }
 }

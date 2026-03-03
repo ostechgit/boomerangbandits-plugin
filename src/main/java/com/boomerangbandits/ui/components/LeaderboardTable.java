@@ -1,7 +1,10 @@
 package com.boomerangbandits.ui.components;
 
+import com.boomerangbandits.ui.components.AntialiasedLabel;
+
 import com.boomerangbandits.ui.UIConstants;
 import net.runelite.client.ui.ColorScheme;
+import net.runelite.client.ui.FontManager;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -41,11 +44,7 @@ public class LeaderboardTable extends JPanel {
         table.setFillsViewportHeight(true);
         table.getTableHeader().setBackground(ColorScheme.DARKER_GRAY_COLOR);
         table.getTableHeader().setForeground(ColorScheme.LIGHT_GRAY_COLOR);
-        table.getTableHeader().setFont(UIConstants.deriveFont(
-                table.getFont(),
-                UIConstants.FONT_SIZE_NORMAL,
-                UIConstants.FONT_BOLD
-        ));
+        table.getTableHeader().setFont(FontManager.getRunescapeBoldFont());
 
         // Column widths: rank=40, name=flex, value=60
         table.getColumnModel().getColumn(0).setMaxWidth(40);
@@ -65,7 +64,7 @@ public class LeaderboardTable extends JPanel {
         scrollPane.setPreferredSize(new Dimension(0, 60));
         add(scrollPane);
 
-        emptyLabel = new JLabel("No data available");
+        emptyLabel = new AntialiasedLabel("No data available");
         emptyLabel.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
         emptyLabel.setHorizontalAlignment(JLabel.CENTER);
         emptyLabel.setBorder(new EmptyBorder(20, 0, 20, 0));

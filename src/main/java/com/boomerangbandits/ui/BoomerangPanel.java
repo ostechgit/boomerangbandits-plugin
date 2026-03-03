@@ -3,6 +3,7 @@ package com.boomerangbandits.ui;
 import com.boomerangbandits.BoomerangBanditsConfig;
 import com.boomerangbandits.ui.components.NavButton;
 import com.boomerangbandits.ui.components.PanelFooter;
+import com.boomerangbandits.ui.components.AntialiasedLabel;
 import com.boomerangbandits.ui.panels.*;
 import com.boomerangbandits.util.ClanValidator;
 import lombok.Getter;
@@ -10,6 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.PluginPanel;
+import net.runelite.client.ui.FontManager;
 import net.runelite.client.util.ImageUtil;
 
 import javax.inject.Inject;
@@ -188,33 +190,33 @@ public class BoomerangPanel extends PluginPanel {
 
         panel.add(Box.createVerticalGlue());
 
-        JLabel icon = new JLabel("BB");
+        JLabel icon = new AntialiasedLabel("BB");
         icon.setForeground(new Color(0xC8AA6E)); // RS gold
-        icon.setFont(UIConstants.deriveFont(icon.getFont(), UIConstants.FONT_SIZE_DISPLAY, UIConstants.FONT_BOLD));
+        icon.setFont(FontManager.getRunescapeBoldFont().deriveFont(36f));
         icon.setAlignmentX(CENTER_ALIGNMENT);
         panel.add(icon);
 
         panel.add(Box.createVerticalStrut(16));
 
-        JLabel line1 = new JLabel("Set your Member Code");
+        JLabel line1 = new AntialiasedLabel("Set your Member Code");
         line1.setForeground(Color.WHITE);
-        line1.setFont(UIConstants.deriveFont(line1.getFont(), UIConstants.FONT_SIZE_LARGE, UIConstants.FONT_BOLD));
+        line1.setFont(FontManager.getRunescapeBoldFont());
         line1.setAlignmentX(CENTER_ALIGNMENT);
         panel.add(line1);
 
         panel.add(Box.createVerticalStrut(8));
 
-        JLabel line2 = new JLabel("Login and join CC");
+        JLabel line2 = new AntialiasedLabel("Login and join CC");
         line2.setForeground(Color.WHITE);
-        line2.setFont(UIConstants.deriveFont(line2.getFont(), UIConstants.FONT_SIZE_LARGE, UIConstants.FONT_BOLD));
+        line2.setFont(FontManager.getRunescapeBoldFont());
         line2.setAlignmentX(CENTER_ALIGNMENT);
         panel.add(line2);
 
         panel.add(Box.createVerticalStrut(8));
 
-        JLabel line3 = new JLabel("to use this plugin");
+        JLabel line3 = new AntialiasedLabel("to use this plugin");
         line3.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
-        line3.setFont(UIConstants.deriveFont(line3.getFont(), UIConstants.FONT_SIZE_NORMAL));
+        line3.setFont(FontManager.getRunescapeSmallFont());
         line3.setAlignmentX(CENTER_ALIGNMENT);
         panel.add(line3);
 

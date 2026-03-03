@@ -7,6 +7,7 @@ import com.boomerangbandits.api.models.ActiveEvent;
 import com.boomerangbandits.api.models.EventDetails;
 import com.boomerangbandits.api.models.WomCompetition;
 import com.boomerangbandits.ui.UIConstants;
+import com.boomerangbandits.ui.components.AntialiasedLabel;
 import com.boomerangbandits.ui.components.CountdownLabel;
 import com.boomerangbandits.ui.components.LeaderboardTable;
 import com.boomerangbandits.util.RefreshThrottler;
@@ -15,6 +16,7 @@ import com.google.gson.JsonObject;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Client;
 import net.runelite.client.ui.ColorScheme;
+import net.runelite.client.ui.FontManager;
 
 import javax.inject.Inject;
 import javax.swing.*;
@@ -130,9 +132,9 @@ public class CompetitionPanel extends JPanel {
         listPanel.setBackground(ColorScheme.DARK_GRAY_COLOR);
         listPanel.setAlignmentX(LEFT_ALIGNMENT);
 
-        JLabel compHeader = new JLabel("Competitions");
+        JLabel compHeader = new AntialiasedLabel("Competitions");
         compHeader.setForeground(Color.WHITE);
-        compHeader.setFont(UIConstants.deriveFont(compHeader.getFont(), UIConstants.FONT_SIZE_MEDIUM, UIConstants.FONT_BOLD));
+        compHeader.setFont(FontManager.getRunescapeBoldFont());
         compHeader.setBorder(new EmptyBorder(UIConstants.PADDING_STANDARD, UIConstants.PADDING_STANDARD,
                 UIConstants.PADDING_STANDARD, UIConstants.PADDING_STANDARD));
         compHeader.setAlignmentX(LEFT_ALIGNMENT);
@@ -144,9 +146,9 @@ public class CompetitionPanel extends JPanel {
         competitionListContainer.setAlignmentX(LEFT_ALIGNMENT);
         listPanel.add(competitionListContainer);
 
-        JLabel eventHeader = new JLabel("Events");
+        JLabel eventHeader = new AntialiasedLabel("Events");
         eventHeader.setForeground(Color.WHITE);
-        eventHeader.setFont(UIConstants.deriveFont(eventHeader.getFont(), UIConstants.FONT_SIZE_MEDIUM, UIConstants.FONT_BOLD));
+        eventHeader.setFont(FontManager.getRunescapeBoldFont());
         eventHeader.setBorder(new EmptyBorder(UIConstants.PADDING_STANDARD, UIConstants.PADDING_STANDARD,
                 UIConstants.PADDING_SMALL, UIConstants.PADDING_STANDARD));
         eventHeader.setAlignmentX(LEFT_ALIGNMENT);
@@ -184,13 +186,13 @@ public class CompetitionPanel extends JPanel {
         headerRow.setAlignmentX(LEFT_ALIGNMENT);
         headerRow.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 
-        JLabel headerLabel = new JLabel("Add Event");
+        JLabel headerLabel = new AntialiasedLabel("Add Event");
         headerLabel.setForeground(Color.WHITE);
-        headerLabel.setFont(UIConstants.deriveFont(headerLabel.getFont(), UIConstants.FONT_SIZE_MEDIUM, UIConstants.FONT_BOLD));
+        headerLabel.setFont(FontManager.getRunescapeBoldFont());
 
-        JLabel arrowLabel = new JLabel("v");
+        JLabel arrowLabel = new AntialiasedLabel("v");
         arrowLabel.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
-        arrowLabel.setFont(UIConstants.deriveFont(arrowLabel.getFont(), UIConstants.FONT_SIZE_SMALL));
+        arrowLabel.setFont(FontManager.getRunescapeSmallFont());
 
         GridBagConstraints hc = new GridBagConstraints();
         hc.gridx = 0;
@@ -219,7 +221,7 @@ public class CompetitionPanel extends JPanel {
         fieldName = addFormRow(formBody, "Event Name");
         fieldDescription = addFormRow(formBody, "Description");
 
-        JLabel typeLabel = new JLabel("Event Type");
+        JLabel typeLabel = new AntialiasedLabel("Event Type");
         typeLabel.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
         typeLabel.setAlignmentX(LEFT_ALIGNMENT);
         formBody.add(typeLabel);
@@ -238,7 +240,7 @@ public class CompetitionPanel extends JPanel {
         fieldStartTime = addFormRow(formBody, "Start (dd/MM/yyyy HH:mm)");
         fieldEndTime = addFormRow(formBody, "End (dd/MM/yyyy HH:mm)");
 
-        formStatus = new JLabel(" ");
+        formStatus = new AntialiasedLabel(" ");
         formStatus.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
         formStatus.setAlignmentX(LEFT_ALIGNMENT);
         formBody.add(formStatus);
@@ -282,7 +284,7 @@ public class CompetitionPanel extends JPanel {
         field.setForeground(Color.WHITE);
         field.setCaretColor(Color.WHITE);
 
-        JLabel label = new JLabel(placeholder);
+        JLabel label = new AntialiasedLabel(placeholder);
         label.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
         label.setAlignmentX(LEFT_ALIGNMENT);
         parent.add(label);
@@ -384,13 +386,13 @@ public class CompetitionPanel extends JPanel {
                 UIConstants.PADDING_STANDARD, UIConstants.PADDING_STANDARD));
         detailHeader.setAlignmentX(LEFT_ALIGNMENT);
 
-        detailTitle = new JLabel("Competition");
+        detailTitle = new AntialiasedLabel("Competition");
         detailTitle.setForeground(Color.WHITE);
-        detailTitle.setFont(UIConstants.deriveFont(detailTitle.getFont(), UIConstants.FONT_SIZE_LARGE, UIConstants.FONT_BOLD));
+        detailTitle.setFont(FontManager.getRunescapeBoldFont());
         detailTitle.setAlignmentX(LEFT_ALIGNMENT);
         detailHeader.add(detailTitle);
 
-        detailMetric = new JLabel("Metric: --");
+        detailMetric = new AntialiasedLabel("Metric: --");
         detailMetric.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
         detailMetric.setAlignmentX(LEFT_ALIGNMENT);
         detailHeader.add(detailMetric);
@@ -442,7 +444,7 @@ public class CompetitionPanel extends JPanel {
                 error -> SwingUtilities.invokeLater(() -> {
                     log.warn("[CompetitionPanel] Failed to load competitions", error);
                     competitionListContainer.removeAll();
-                    JLabel err = new JLabel("Failed to load competitions");
+                    JLabel err = new AntialiasedLabel("Failed to load competitions");
                     err.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
                     err.setBorder(new EmptyBorder(8, UIConstants.PADDING_STANDARD, 8, UIConstants.PADDING_STANDARD));
                     competitionListContainer.add(err);
@@ -470,7 +472,7 @@ public class CompetitionPanel extends JPanel {
         competitionListContainer.removeAll();
 
         if (competitions == null || competitions.isEmpty()) {
-            JLabel empty = new JLabel("No competitions found");
+            JLabel empty = new AntialiasedLabel("No competitions found");
             empty.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
             empty.setBorder(new EmptyBorder(8, UIConstants.PADDING_STANDARD, 8, UIConstants.PADDING_STANDARD));
             competitionListContainer.add(empty);
@@ -497,9 +499,9 @@ public class CompetitionPanel extends JPanel {
 
         GridBagConstraints c = new GridBagConstraints();
 
-        JLabel title = new JLabel(comp.getTitle());
+        JLabel title = new AntialiasedLabel(comp.getTitle());
         title.setForeground(Color.WHITE);
-        title.setFont(UIConstants.deriveFont(title.getFont(), UIConstants.FONT_SIZE_MEDIUM, UIConstants.FONT_BOLD));
+        title.setFont(FontManager.getRunescapeBoldFont());
         c.gridx = 0;
         c.gridy = 0;
         c.weightx = 1.0;
@@ -509,9 +511,9 @@ public class CompetitionPanel extends JPanel {
         c.insets = new java.awt.Insets(0, 0, 2, 0);
         card.add(title, c);
 
-        JLabel arrow = new JLabel("›");
+        JLabel arrow = new AntialiasedLabel("›");
         arrow.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
-        arrow.setFont(UIConstants.deriveFont(arrow.getFont(), UIConstants.FONT_SIZE_LARGE));
+        arrow.setFont(FontManager.getRunescapeBoldFont());
         c.gridx = 1;
         c.gridy = 0;
         c.gridheight = 2;
@@ -523,9 +525,9 @@ public class CompetitionPanel extends JPanel {
 
         String statusText = comp.isOngoing() ? "Ongoing" : "Upcoming";
         Color statusColor = comp.isOngoing() ? new Color(0x4CAF50) : new Color(0xFFC107);
-        JLabel status = new JLabel(statusText + " | " + UIConstants.capitalizeLower(comp.getMetric()));
+        JLabel status = new AntialiasedLabel(statusText + " | " + UIConstants.capitalizeLower(comp.getMetric()));
         status.setForeground(statusColor);
-        status.setFont(UIConstants.deriveFont(status.getFont(), UIConstants.FONT_SIZE_SMALL));
+        status.setFont(FontManager.getRunescapeSmallFont());
         c.gridx = 0;
         c.gridy = 1;
         c.gridheight = 1;
@@ -589,7 +591,7 @@ public class CompetitionPanel extends JPanel {
 
         List<EventDetails> events = activeEvent != null ? activeEvent.getEvents() : null;
         if (events == null || events.isEmpty()) {
-            JLabel none = new JLabel("No events");
+            JLabel none = new AntialiasedLabel("No events");
             none.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
             none.setBorder(new EmptyBorder(4, UIConstants.PADDING_STANDARD, UIConstants.PADDING_STANDARD, UIConstants.PADDING_STANDARD));
             none.setAlignmentX(LEFT_ALIGNMENT);
@@ -636,7 +638,7 @@ public class CompetitionPanel extends JPanel {
         int row = 0;
 
         // Name — col 0
-        JLabel nameLabel = new JLabel(event.getName());
+        JLabel nameLabel = new AntialiasedLabel(event.getName());
         nameLabel.setForeground(Color.WHITE);
         c.gridx = 0;
         c.gridy = row;
@@ -646,9 +648,9 @@ public class CompetitionPanel extends JPanel {
 
         // Type badge — col 1
         if (event.getEventType() != null && !event.getEventType().isEmpty()) {
-            JLabel typeLabel = new JLabel(UIConstants.capitalizeLower(event.getEventType()));
+            JLabel typeLabel = new AntialiasedLabel(UIConstants.capitalizeLower(event.getEventType()));
             typeLabel.setForeground(new Color(0x2196F3));
-            typeLabel.setFont(UIConstants.deriveFont(typeLabel.getFont(), UIConstants.FONT_SIZE_SMALL, UIConstants.FONT_BOLD));
+            typeLabel.setFont(FontManager.getRunescapeBoldFont());
             typeLabel.setBorder(BorderFactory.createCompoundBorder(
                     BorderFactory.createLineBorder(new Color(0x2196F3)),
                     new EmptyBorder(0, 3, 0, 3)
@@ -663,9 +665,9 @@ public class CompetitionPanel extends JPanel {
         }
 
         // LIVE / UPCOMING badge — col 2
-        JLabel statusBadge = new JLabel(isLive ? "LIVE" : "UPCOMING");
+        JLabel statusBadge = new AntialiasedLabel(isLive ? "LIVE" : "UPCOMING");
         statusBadge.setForeground(borderColor);
-        statusBadge.setFont(UIConstants.deriveFont(statusBadge.getFont(), UIConstants.FONT_SIZE_SMALL, UIConstants.FONT_BOLD));
+        statusBadge.setFont(FontManager.getRunescapeBoldFont());
         c.gridx = 2;
         c.gridy = row;
         c.weightx = 0;
@@ -814,7 +816,7 @@ public class CompetitionPanel extends JPanel {
             lc.gridx = 0;
             lc.gridy = i;
             lc.weightx = 0;
-            form.add(new JLabel(labels[i]), lc);
+            form.add(new AntialiasedLabel(labels[i]), lc);
             lc.gridx = 1;
             lc.weightx = 1.0;
             form.add(fields[i], lc);
@@ -867,7 +869,7 @@ public class CompetitionPanel extends JPanel {
     }
 
     private JLabel makeEventLabel(String text, Color color) {
-        JLabel label = new JLabel(text);
+        JLabel label = new AntialiasedLabel(text);
         label.setForeground(color);
         return label;
     }

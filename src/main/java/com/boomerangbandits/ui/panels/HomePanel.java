@@ -7,12 +7,14 @@ import com.boomerangbandits.api.models.PlayerProfile;
 import com.boomerangbandits.api.models.WomCompetition;
 import com.boomerangbandits.ui.UIConstants;
 import com.boomerangbandits.ui.components.AntialiasedLabel;
+import com.boomerangbandits.ui.components.AntialiasedTextArea;
 import com.boomerangbandits.ui.components.Badge;
 import com.boomerangbandits.ui.components.CountdownLabel;
 import com.boomerangbandits.util.RefreshThrottler;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Client;
 import net.runelite.client.ui.ColorScheme;
+import net.runelite.client.ui.FontManager;
 
 import javax.inject.Inject;
 import javax.swing.*;
@@ -52,7 +54,7 @@ public class HomePanel extends JPanel {
     private CountdownLabel competitionCountdown;
     private JPanel clanActivitySection;
     private JPanel challengeSection;
-    private JTextArea challengeText;
+    private AntialiasedTextArea challengeText;
     private JLabel challengeStreakLabel;
     private JLabel challengeStatsLabel;
     // Local data storage
@@ -83,13 +85,9 @@ public class HomePanel extends JPanel {
     }
 
     private void buildGreetingSection() {
-        greetingLabel = new JLabel("Welcome, Adventurer!");
+        greetingLabel = new AntialiasedLabel("Welcome, Adventurer!");
         greetingLabel.setForeground(Color.WHITE);
-        greetingLabel.setFont(UIConstants.deriveFont(
-                greetingLabel.getFont(),
-                UIConstants.FONT_SIZE_LARGE,
-                UIConstants.FONT_BOLD
-        ));
+        greetingLabel.setFont(FontManager.getRunescapeBoldFont());
         greetingLabel.setAlignmentX(LEFT_ALIGNMENT);
         add(greetingLabel);
 
@@ -101,19 +99,19 @@ public class HomePanel extends JPanel {
 
         rankBadge = new Badge("--", ColorScheme.MEDIUM_GRAY_COLOR);
 
-        clanPointsLabel = new JLabel("Clan Points: --");
+        clanPointsLabel = new AntialiasedLabel("Clan Points: --");
         clanPointsLabel.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
-        clanPointsLabel.setFont(UIConstants.deriveFont(clanPointsLabel.getFont(), UIConstants.FONT_SIZE_NORMAL));
+        clanPointsLabel.setFont(FontManager.getRunescapeSmallFont());
         // Derive badge font from clanPointsLabel — JLabel always has a non-null font at construction
-        rankBadge.setFont(UIConstants.deriveFont(clanPointsLabel.getFont(), UIConstants.FONT_SIZE_SMALL, UIConstants.FONT_BOLD));
+        rankBadge.setFont(FontManager.getRunescapeBoldFont());
         profileRow.add(rankBadge);
         profileRow.add(clanPointsLabel);
 
         add(profileRow);
 
-        statusLabel = new JLabel("Not connected");
+        statusLabel = new AntialiasedLabel("Not connected");
         statusLabel.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
-        statusLabel.setFont(UIConstants.deriveFont(statusLabel.getFont(), UIConstants.FONT_SIZE_NORMAL));
+        statusLabel.setFont(FontManager.getRunescapeSmallFont());
         statusLabel.setBorder(new EmptyBorder(2, 0, UIConstants.PADDING_LARGE, 0));
         statusLabel.setAlignmentX(LEFT_ALIGNMENT);
         add(statusLabel);
@@ -138,7 +136,7 @@ public class HomePanel extends JPanel {
 
         JLabel header = new AntialiasedLabel("Announcements");
         header.setForeground(new Color(0xFFC107));
-        header.setFont(UIConstants.deriveFont(header.getFont(), UIConstants.FONT_SIZE_MEDIUM, UIConstants.FONT_BOLD));
+        header.setFont(FontManager.getRunescapeBoldFont());
         header.setAlignmentX(LEFT_ALIGNMENT);
         announcementSection.add(header);
 
@@ -185,7 +183,7 @@ public class HomePanel extends JPanel {
         c.anchor = GridBagConstraints.WEST;
         JLabel header = new AntialiasedLabel("Daily Challenge");
         header.setForeground(new Color(0xFF8C00));
-        header.setFont(UIConstants.deriveFont(header.getFont(), UIConstants.FONT_SIZE_MEDIUM, UIConstants.FONT_BOLD));
+        header.setFont(FontManager.getRunescapeBoldFont());
         headerRow.add(header, c);
 
         c.gridx = 1;
@@ -194,21 +192,22 @@ public class HomePanel extends JPanel {
         c.anchor = GridBagConstraints.EAST;
         challengeStreakLabel = new AntialiasedLabel("Streak: --");
         challengeStreakLabel.setForeground(new Color(0xFFC107));
-        challengeStreakLabel.setFont(UIConstants.deriveFont(challengeStreakLabel.getFont(), UIConstants.FONT_SIZE_SMALL, UIConstants.FONT_BOLD));
+        challengeStreakLabel.setFont(FontManager.getRunescapeBoldFont());
         headerRow.add(challengeStreakLabel, c);
 
         challengeSection.add(headerRow);
         challengeSection.add(Box.createVerticalStrut(UIConstants.SPACING_SMALL));
 
         // Challenge text — JTextArea for wrapping (Rule 15)
-        challengeText = new JTextArea("Loading...");
+        challengeText = new AntialiasedTextArea("Loading...");
         challengeText.setEditable(false);
+        challengeText.setFocusable(false);
         challengeText.setLineWrap(true);
         challengeText.setWrapStyleWord(true);
         challengeText.setColumns(0);
         challengeText.setBackground(ColorScheme.DARKER_GRAY_COLOR);
         challengeText.setForeground(Color.WHITE);
-        challengeText.setFont(UIConstants.deriveFont(new JLabel().getFont(), UIConstants.FONT_SIZE_NORMAL));
+        challengeText.setFont(FontManager.getRunescapeSmallFont());
         challengeText.setBorder(null);
         challengeText.setAlignmentX(LEFT_ALIGNMENT);
         challengeText.setMaximumSize(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE));
@@ -219,7 +218,7 @@ public class HomePanel extends JPanel {
         // Stats row: completed / received
         challengeStatsLabel = new AntialiasedLabel("Completed: -- / --");
         challengeStatsLabel.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
-        challengeStatsLabel.setFont(UIConstants.deriveFont(challengeStatsLabel.getFont(), UIConstants.FONT_SIZE_SMALL));
+        challengeStatsLabel.setFont(FontManager.getRunescapeSmallFont());
         challengeStatsLabel.setAlignmentX(LEFT_ALIGNMENT);
         challengeSection.add(challengeStatsLabel);
 
@@ -246,7 +245,7 @@ public class HomePanel extends JPanel {
 
         JLabel header = new AntialiasedLabel("Clan Activity Today");
         header.setForeground(Color.WHITE);
-        header.setFont(UIConstants.deriveFont(header.getFont(), UIConstants.FONT_SIZE_MEDIUM, UIConstants.FONT_BOLD));
+        header.setFont(FontManager.getRunescapeBoldFont());
         header.setAlignmentX(LEFT_ALIGNMENT);
         clanActivitySection.add(header);
 
@@ -273,9 +272,9 @@ public class HomePanel extends JPanel {
         competitionSection.setMaximumSize(new java.awt.Dimension(Integer.MAX_VALUE, 100));
         competitionSection.setVisible(false);
 
-        JLabel header = new JLabel("Active Competition");
+        JLabel header = new AntialiasedLabel("Active Competition");
         header.setForeground(Color.WHITE);
-        header.setFont(UIConstants.deriveFont(header.getFont(), UIConstants.FONT_SIZE_MEDIUM, UIConstants.FONT_BOLD));
+        header.setFont(FontManager.getRunescapeBoldFont());
         header.setAlignmentX(LEFT_ALIGNMENT);
         competitionSection.add(header);
 
@@ -363,7 +362,7 @@ public class HomePanel extends JPanel {
                 itemPanel.setAlignmentX(LEFT_ALIGNMENT);
                 itemPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE));
 
-                JTextArea textArea = new JTextArea(message);
+                AntialiasedTextArea textArea = new AntialiasedTextArea(message);
                 textArea.setEditable(false);
                 textArea.setFocusable(false);
                 textArea.setLineWrap(true);
@@ -371,7 +370,7 @@ public class HomePanel extends JPanel {
                 textArea.setColumns(0);
                 textArea.setBackground(ColorScheme.DARKER_GRAY_COLOR);
                 textArea.setForeground(new Color(0xFFC107)); // amber
-                textArea.setFont(UIConstants.deriveFont(new JLabel().getFont(), UIConstants.FONT_SIZE_NORMAL));
+                textArea.setFont(FontManager.getRunescapeSmallFont());
                 textArea.setBorder(new EmptyBorder(2, UIConstants.PADDING_SMALL, 2, 0));
 
                 itemPanel.add(textArea, BorderLayout.CENTER);
@@ -551,7 +550,7 @@ public class HomePanel extends JPanel {
         // Active gainer count
         JLabel gainersLabel = new AntialiasedLabel(data.getPlayersWithXpGainToday() + " players gained XP today");
         gainersLabel.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
-        gainersLabel.setFont(UIConstants.deriveFont(gainersLabel.getFont(), UIConstants.FONT_SIZE_SMALL, UIConstants.FONT_ITALIC));
+        gainersLabel.setFont(FontManager.getRunescapeSmallFont());
         gainersLabel.setAlignmentX(LEFT_ALIGNMENT);
         gainersLabel.setBorder(new EmptyBorder(0, 0, UIConstants.SPACING_SMALL, 0));
         clanActivitySection.add(gainersLabel);
@@ -561,7 +560,7 @@ public class HomePanel extends JPanel {
         if (topPlayers != null && !topPlayers.isEmpty()) {
             JLabel topPlayersLabel = new AntialiasedLabel("Top Gainers:");
             topPlayersLabel.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
-            topPlayersLabel.setFont(UIConstants.deriveFont(topPlayersLabel.getFont(), UIConstants.FONT_SIZE_SMALL, UIConstants.FONT_BOLD));
+            topPlayersLabel.setFont(FontManager.getRunescapeBoldFont());
             topPlayersLabel.setAlignmentX(LEFT_ALIGNMENT);
             clanActivitySection.add(topPlayersLabel);
 
@@ -577,7 +576,7 @@ public class HomePanel extends JPanel {
 
             JLabel topSkillsLabel = new AntialiasedLabel("Top Skills:");
             topSkillsLabel.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
-            topSkillsLabel.setFont(UIConstants.deriveFont(topSkillsLabel.getFont(), UIConstants.FONT_SIZE_SMALL, UIConstants.FONT_BOLD));
+            topSkillsLabel.setFont(FontManager.getRunescapeBoldFont());
             topSkillsLabel.setAlignmentX(LEFT_ALIGNMENT);
             clanActivitySection.add(topSkillsLabel);
 
@@ -607,7 +606,7 @@ public class HomePanel extends JPanel {
         c.insets = new Insets(0, 0, 0, 4);
         JLabel leftLabel = new AntialiasedLabel(label);
         leftLabel.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
-        leftLabel.setFont(UIConstants.deriveFont(leftLabel.getFont(), UIConstants.FONT_SIZE_SMALL));
+        leftLabel.setFont(FontManager.getRunescapeSmallFont());
         row.add(leftLabel, c);
 
         c.gridx = 1;
@@ -617,7 +616,7 @@ public class HomePanel extends JPanel {
         c.insets = new Insets(0, 0, 0, 0);
         JLabel rightLabel = new AntialiasedLabel(value);
         rightLabel.setForeground(new Color(0x4CAF50));
-        rightLabel.setFont(UIConstants.deriveFont(rightLabel.getFont(), UIConstants.FONT_SIZE_SMALL, UIConstants.FONT_BOLD));
+        rightLabel.setFont(FontManager.getRunescapeBoldFont());
         row.add(rightLabel, c);
 
         target.add(row);

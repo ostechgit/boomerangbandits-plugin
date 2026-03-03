@@ -2,6 +2,7 @@ package com.boomerangbandits.ui.components;
 
 import com.boomerangbandits.ui.UIConstants;
 import net.runelite.client.ui.ColorScheme;
+import net.runelite.client.ui.FontManager;
 
 import javax.swing.*;
 import javax.swing.border.MatteBorder;
@@ -28,7 +29,7 @@ public class PanelFooter extends JPanel {
         setMaximumSize(new Dimension(Integer.MAX_VALUE, 28));
 
         refreshBtn = new JButton("Refresh");
-        refreshBtn.setFont(UIConstants.deriveFont(refreshBtn.getFont(), UIConstants.FONT_SIZE_SMALL));
+        refreshBtn.setFont(FontManager.getRunescapeSmallFont());
         refreshBtn.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
         refreshBtn.setBorder(null);
         refreshBtn.setContentAreaFilled(false);

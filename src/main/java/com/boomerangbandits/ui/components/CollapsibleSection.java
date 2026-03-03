@@ -3,6 +3,7 @@ package com.boomerangbandits.ui.components;
 import com.boomerangbandits.ui.UIConstants;
 import lombok.Getter;
 import net.runelite.client.ui.ColorScheme;
+import net.runelite.client.ui.FontManager;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -50,12 +51,12 @@ public class CollapsibleSection extends JPanel {
         headerPanel.setAlignmentX(LEFT_ALIGNMENT);
         headerPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE));
 
-        arrowLabel = new JLabel(expanded ? "v" : ">");
-        arrowLabel.setFont(UIConstants.deriveFont(arrowLabel.getFont(), UIConstants.FONT_SIZE_SMALL));
+        arrowLabel = new AntialiasedLabel(expanded ? "v" : ">");
+        arrowLabel.setFont(FontManager.getRunescapeSmallFont());
         arrowLabel.setForeground(ColorScheme.BRAND_ORANGE);
 
-        JLabel titleLabel = new JLabel(title);
-        titleLabel.setFont(UIConstants.deriveFont(titleLabel.getFont(), UIConstants.FONT_SIZE_MEDIUM, UIConstants.FONT_BOLD));
+        JLabel titleLabel = new AntialiasedLabel(title);
+        titleLabel.setFont(FontManager.getRunescapeBoldFont());
         titleLabel.setForeground(Color.WHITE);
 
         headerPanel.add(arrowLabel, BorderLayout.WEST);

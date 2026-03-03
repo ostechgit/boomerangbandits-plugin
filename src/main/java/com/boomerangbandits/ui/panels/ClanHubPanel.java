@@ -5,11 +5,13 @@ import com.boomerangbandits.api.ClanApiService;
 import com.boomerangbandits.api.models.RankSummaryResponse;
 import com.boomerangbandits.ui.UIConstants;
 import com.boomerangbandits.ui.components.AntialiasedLabel;
+import com.boomerangbandits.ui.components.AntialiasedTextArea;
 import com.boomerangbandits.ui.components.CollapsibleSection;
 import com.boomerangbandits.ui.components.WidthConstrainedPanel;
 import com.boomerangbandits.util.RefreshThrottler;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.client.ui.ColorScheme;
+import net.runelite.client.ui.FontManager;
 import net.runelite.client.util.LinkBrowser;
 
 import javax.inject.Inject;
@@ -27,7 +29,7 @@ public class ClanHubPanel extends JPanel implements Scrollable {
     private final RefreshThrottler rosterThrottler = new RefreshThrottler(60 * 60 * 1_000L);
     private JPanel linksPanel;
     private JPanel rosterContent;
-    private JTextArea dinkUrlLabel;
+    private AntialiasedTextArea dinkUrlLabel;
 
     @Inject
     public ClanHubPanel(BoomerangBanditsConfig config, ClanApiService clanApi) {
@@ -42,8 +44,8 @@ public class ClanHubPanel extends JPanel implements Scrollable {
     }
 
     private void buildUI() {
-        JLabel titleLabel = new JLabel("Clan Hub");
-        titleLabel.setFont(UIConstants.deriveFont(titleLabel.getFont(), UIConstants.FONT_SIZE_LARGE, UIConstants.FONT_BOLD));
+        JLabel titleLabel = new AntialiasedLabel("Clan Hub");
+        titleLabel.setFont(FontManager.getRunescapeBoldFont());
         titleLabel.setForeground(ColorScheme.BRAND_ORANGE);
         titleLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
         titleLabel.setMaximumSize(new Dimension(Integer.MAX_VALUE, titleLabel.getPreferredSize().height));
@@ -51,7 +53,7 @@ public class ClanHubPanel extends JPanel implements Scrollable {
 
         add(Box.createVerticalStrut(10));
 
-        JLabel welcomeLabel = new JLabel("Welcome to Boomerang Bandits!");
+        JLabel welcomeLabel = new AntialiasedLabel("Welcome to Boomerang Bandits!");
         welcomeLabel.setForeground(Color.WHITE);
         welcomeLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
         welcomeLabel.setMaximumSize(new Dimension(Integer.MAX_VALUE, welcomeLabel.getPreferredSize().height));
@@ -60,8 +62,8 @@ public class ClanHubPanel extends JPanel implements Scrollable {
         add(Box.createVerticalStrut(15));
 
         // Quick Links
-        JLabel linksTitle = new JLabel("Quick Links");
-        linksTitle.setFont(UIConstants.deriveFont(linksTitle.getFont(), UIConstants.FONT_SIZE_MEDIUM, UIConstants.FONT_BOLD));
+        JLabel linksTitle = new AntialiasedLabel("Quick Links");
+        linksTitle.setFont(FontManager.getRunescapeBoldFont());
         linksTitle.setForeground(ColorScheme.BRAND_ORANGE);
         linksTitle.setAlignmentX(Component.LEFT_ALIGNMENT);
         linksTitle.setMaximumSize(new Dimension(Integer.MAX_VALUE, linksTitle.getPreferredSize().height));
@@ -124,7 +126,7 @@ public class ClanHubPanel extends JPanel implements Scrollable {
         addLinkButton("Wise Old Man", "https://wiseoldman.net/groups/11575");
 
         if (linksPanel.getComponentCount() == 0) {
-            JLabel noLinks = new JLabel("No links configured");
+            JLabel noLinks = new AntialiasedLabel("No links configured");
             noLinks.setForeground(Color.GRAY);
             linksPanel.add(noLinks);
         }
@@ -169,7 +171,7 @@ public class ClanHubPanel extends JPanel implements Scrollable {
 
         JLabel loading = new AntialiasedLabel("Loading...");
         loading.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
-        loading.setFont(UIConstants.deriveFont(loading.getFont(), UIConstants.FONT_SIZE_SMALL));
+        loading.setFont(FontManager.getRunescapeSmallFont());
         loading.setAlignmentX(LEFT_ALIGNMENT);
         loading.setMaximumSize(new Dimension(Integer.MAX_VALUE, loading.getPreferredSize().height));
         content.add(loading);
@@ -182,7 +184,7 @@ public class ClanHubPanel extends JPanel implements Scrollable {
 
         JLabel totalLabel = new AntialiasedLabel("Total Members: " + summary.getTotalMembers());
         totalLabel.setForeground(Color.WHITE);
-        totalLabel.setFont(UIConstants.deriveFont(totalLabel.getFont(), UIConstants.FONT_SIZE_NORMAL, UIConstants.FONT_BOLD));
+        totalLabel.setFont(FontManager.getRunescapeBoldFont());
         totalLabel.setAlignmentX(LEFT_ALIGNMENT);
         totalLabel.setMaximumSize(new Dimension(Integer.MAX_VALUE, totalLabel.getPreferredSize().height));
         rosterContent.add(totalLabel);
@@ -218,7 +220,7 @@ public class ClanHubPanel extends JPanel implements Scrollable {
         c.insets = new Insets(0, 0, 0, 4);
         JLabel rankLabel = new AntialiasedLabel(rank);
         rankLabel.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
-        rankLabel.setFont(UIConstants.deriveFont(rankLabel.getFont(), UIConstants.FONT_SIZE_SMALL));
+        rankLabel.setFont(FontManager.getRunescapeSmallFont());
         row.add(rankLabel, c);
 
         c.gridx = 1;
@@ -228,7 +230,7 @@ public class ClanHubPanel extends JPanel implements Scrollable {
         c.insets = new Insets(0, 0, 0, 0);
         JLabel countLabel = new AntialiasedLabel(count + " members");
         countLabel.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
-        countLabel.setFont(UIConstants.deriveFont(countLabel.getFont(), UIConstants.FONT_SIZE_SMALL));
+        countLabel.setFont(FontManager.getRunescapeSmallFont());
         row.add(countLabel, c);
 
         return row;
@@ -244,10 +246,10 @@ public class ClanHubPanel extends JPanel implements Scrollable {
         ));
 
         // HTML label wraps correctly because scrollWrap gives it a bounded width
-        JLabel desc = new JLabel("<html>To enable automatic webhook tracking, paste the URL below into "
+        JLabel desc = new AntialiasedLabel("<html>To enable automatic webhook tracking, paste the URL below into "
                 + "Dink's settings: <b>Advanced &gt; Dynamic Config URL</b></html>");
         desc.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
-        desc.setFont(UIConstants.deriveFont(desc.getFont(), UIConstants.FONT_SIZE_SMALL));
+        desc.setFont(FontManager.getRunescapeSmallFont());
         desc.setAlignmentX(LEFT_ALIGNMENT);
         desc.setMaximumSize(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE));
         content.add(desc);
@@ -255,14 +257,15 @@ public class ClanHubPanel extends JPanel implements Scrollable {
         content.add(Box.createVerticalStrut(8));
 
         // Read-only JTextArea — wraps long URLs, no horizontal scroll
-        dinkUrlLabel = new JTextArea("Waiting for config sync...");
+        dinkUrlLabel = new AntialiasedTextArea("Waiting for config sync...");
         dinkUrlLabel.setEditable(false);
+        dinkUrlLabel.setFocusable(false);
         dinkUrlLabel.setLineWrap(true);
         dinkUrlLabel.setWrapStyleWord(false); // URLs should break mid-word
         dinkUrlLabel.setColumns(0);           // don't use column count for preferred width
         dinkUrlLabel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
         dinkUrlLabel.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
-        dinkUrlLabel.setFont(UIConstants.deriveFont(dinkUrlLabel.getFont(), UIConstants.FONT_SIZE_SMALL));
+        dinkUrlLabel.setFont(FontManager.getRunescapeSmallFont());
         dinkUrlLabel.setBorder(new EmptyBorder(4, 4, 4, 4));
         dinkUrlLabel.setAlignmentX(LEFT_ALIGNMENT);
         dinkUrlLabel.setMaximumSize(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE));
@@ -342,9 +345,9 @@ public class ClanHubPanel extends JPanel implements Scrollable {
     }
 
     private JLabel createInfoSectionHeader(String text) {
-        JLabel label = new JLabel(text);
+        JLabel label = new AntialiasedLabel(text);
         label.setForeground(Color.WHITE);
-        label.setFont(UIConstants.deriveFont(label.getFont(), UIConstants.FONT_SIZE_MEDIUM, UIConstants.FONT_BOLD));
+        label.setFont(FontManager.getRunescapeBoldFont());
         label.setBorder(new EmptyBorder(UIConstants.PADDING_LARGE, 0, UIConstants.SPACING_SMALL, 0));
         label.setAlignmentX(LEFT_ALIGNMENT);
         label.setMaximumSize(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE));
@@ -352,9 +355,9 @@ public class ClanHubPanel extends JPanel implements Scrollable {
     }
 
     private JLabel createInfoText(String text) {
-        JLabel label = new JLabel("<html>" + text + "</html>");
+        JLabel label = new AntialiasedLabel("<html>" + text + "</html>");
         label.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
-        label.setFont(UIConstants.deriveFont(label.getFont(), UIConstants.FONT_SIZE_NORMAL, UIConstants.FONT_PLAIN));
+        label.setFont(FontManager.getRunescapeSmallFont());
         label.setBorder(new EmptyBorder(2, 0, UIConstants.SPACING_ITEM, 0));
         label.setAlignmentX(LEFT_ALIGNMENT);
         label.setMaximumSize(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE));
@@ -374,18 +377,18 @@ public class ClanHubPanel extends JPanel implements Scrollable {
 
         GridBagConstraints c = new GridBagConstraints();
 
-        JLabel actLabel = new JLabel(activity);
+        JLabel actLabel = new AntialiasedLabel(activity);
         actLabel.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
-        actLabel.setFont(UIConstants.deriveFont(actLabel.getFont(), UIConstants.FONT_SIZE_NORMAL));
+        actLabel.setFont(FontManager.getRunescapeSmallFont());
         c.gridx = 0;
         c.weightx = 1.0;
         c.fill = GridBagConstraints.HORIZONTAL;
         c.anchor = GridBagConstraints.WEST;
         row.add(actLabel, c);
 
-        JLabel ptsLabel = new JLabel(points);
+        JLabel ptsLabel = new AntialiasedLabel(points);
         ptsLabel.setForeground(new Color(0x4CAF50));
-        ptsLabel.setFont(UIConstants.deriveFont(ptsLabel.getFont(), UIConstants.FONT_SIZE_NORMAL, UIConstants.FONT_BOLD));
+        ptsLabel.setFont(FontManager.getRunescapeBoldFont());
         c.gridx = 1;
         c.weightx = 0.0;
         c.fill = GridBagConstraints.NONE;

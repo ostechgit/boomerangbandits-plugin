@@ -3,9 +3,11 @@ package com.boomerangbandits.ui.panels;
 import com.boomerangbandits.api.ClanApiService;
 import com.boomerangbandits.api.models.LeaderboardEntry;
 import com.boomerangbandits.ui.UIConstants;
+import com.boomerangbandits.ui.components.AntialiasedLabel;
 import com.boomerangbandits.ui.components.LeaderboardTable;
 import com.boomerangbandits.util.RefreshThrottler;
 import net.runelite.client.ui.ColorScheme;
+import net.runelite.client.ui.FontManager;
 
 import javax.inject.Inject;
 import javax.swing.*;
@@ -43,9 +45,9 @@ public class LeaderboardPanel extends JPanel {
         setBackground(ColorScheme.DARK_GRAY_COLOR);
 
         // Header
-        JLabel header = new JLabel("Clan Leaderboard");
+        JLabel header = new AntialiasedLabel("Clan Leaderboard");
         header.setForeground(java.awt.Color.WHITE);
-        header.setFont(UIConstants.deriveFont(header.getFont(), UIConstants.FONT_SIZE_MEDIUM, UIConstants.FONT_BOLD));
+        header.setFont(FontManager.getRunescapeBoldFont());
         header.setBorder(new EmptyBorder(
                 UIConstants.PADDING_STANDARD,
                 UIConstants.PADDING_STANDARD,
@@ -71,7 +73,7 @@ public class LeaderboardPanel extends JPanel {
         prevButton.addActionListener(e -> loadPage(currentPage - 1));
         pagination.add(prevButton);
 
-        pageLabel = new JLabel("1 / 1");
+        pageLabel = new AntialiasedLabel("1 / 1");
         pageLabel.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
         pagination.add(pageLabel);
 
