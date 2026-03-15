@@ -243,26 +243,20 @@ public class ClanRankSyncService {
 
         // Batch if needed
         if (updates.size() > MAX_BATCH_SIZE) {
-            log.info("Batching {} updates into chunks of {}", updates.size(), MAX_BATCH_SIZE);
+            int totalBatches = (updates.size() + MAX_BATCH_SIZE - 1) / MAX_BATCH_SIZE;
+            log.info("Batching {} updates into {} chunks of {}", updates.size(), totalBatches, MAX_BATCH_SIZE);
 
             for (int i = 0; i < updates.size(); i += MAX_BATCH_SIZE) {
+                int batchIndex = i / MAX_BATCH_SIZE;
                 int end = Math.min(i + MAX_BATCH_SIZE, updates.size());
-                List<RankSyncRequest.RankUpdate> batch = updates.subList(i, end);
+                List<RankSyncRequest.RankUpdate> batch = new ArrayList<>(updates.subList(i, end));
 
-                log.info("Sending batch {}/{}", (i / MAX_BATCH_SIZE) + 1,
-                        (updates.size() + MAX_BATCH_SIZE - 1) / MAX_BATCH_SIZE);
-
-                sendBatch(batch, onSuccess, onError);
-
-                // Small delay between batches to avoid rate limiting
-                if (end < updates.size()) {
-                    try {
-                        Thread.sleep(1000);
-                    } catch (InterruptedException e) {
-                        Thread.currentThread().interrupt();
-                        return;
-                    }
-                }
+                // Schedule each batch with a staggered delay to avoid rate limiting
+                // without blocking the shared executor thread
+                executor.schedule(() -> {
+                    log.info("Sending batch {}/{}", batchIndex + 1, totalBatches);
+                    sendBatch(batch, onSuccess, onError);
+                }, (long) batchIndex * 1000, TimeUnit.MILLISECONDS);
             }
         } else {
             sendBatch(updates, onSuccess, onError);
