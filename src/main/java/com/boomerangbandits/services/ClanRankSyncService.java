@@ -62,6 +62,16 @@ public class ClanRankSyncService {
     private Gson gson;
     private ScheduledFuture<?> periodicSyncTask;
     private ScheduledExecutorService executor;
+    private volatile String authToken;
+    private volatile long accountHash = -1;
+
+    public void setAuthToken(String authToken) {
+        this.authToken = authToken;
+    }
+
+    public void setAccountHash(long accountHash) {
+        this.accountHash = accountHash;
+    }
 
     /**
      * Start periodic rank syncing.
@@ -270,9 +280,11 @@ public class ClanRankSyncService {
         Request httpRequest = new Request.Builder()
                 .url(ApiConstants.BACKEND_BASE_URL + "/members/ranks/sync")
                 .post(body)
-                .addHeader("X-Member-Code", config.memberCode())
-                .addHeader("Content-Type", "application/json")
-                .addHeader("User-Agent", ApiConstants.USER_AGENT)
+                .header("X-Member-Code", config.memberCode())
+                .header("X-Account-Hash", String.valueOf(accountHash))
+                .header("X-Auth-Token", authToken != null ? authToken : "")
+                .header("Content-Type", "application/json")
+                .header("User-Agent", ApiConstants.USER_AGENT)
                 .build();
 
         httpClient.newCall(httpRequest).enqueue(new Callback() {
