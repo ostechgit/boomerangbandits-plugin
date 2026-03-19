@@ -29,7 +29,7 @@ public final class ApiConstants {
     public static final String BACKEND_BASE_URL;
 
     static {
-        String url = "https://boomerangbandits.cc"; // fallback
+        String url = "https://api.boomerangbandits.cc"; // fallback
         try (InputStream is = ApiConstants.class.getResourceAsStream("/com/boomerangbandits/api.properties")) {
             if (is != null) {
                 Properties props = new Properties();
