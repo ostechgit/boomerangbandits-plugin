@@ -1,10 +1,8 @@
 package com.boomerangbandits.ui.components;
 
 import net.runelite.client.ui.ColorScheme;
-import net.runelite.client.ui.ColorScheme;
 
 import javax.swing.*;
-import java.time.Duration;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.format.DateTimeParseException;
