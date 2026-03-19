@@ -479,16 +479,10 @@ public class HomePanel extends JPanel {
         clanActivityThrottler.recordRefresh();
         clanApi.fetchDailyXp(
                 response -> SwingUtilities.invokeLater(() -> {
-                    log.debug("[HomePanel] DailyXp response: success={}, topPlayers={}, topSkills={}, gainers={}",
-                            response != null ? response.isSuccess() : "null",
-                            response != null && response.getTopPlayers() != null ? response.getTopPlayers().size() : "null",
-                            response != null && response.getTopSkills() != null ? response.getTopSkills().size() : "null",
-                            response != null ? response.getPlayersWithXpGainToday() : "null");
                     if (response != null && response.isSuccess()) {
                         updateClanActivity(response);
                         clanActivitySection.setVisible(true);
                     } else {
-                        log.debug("[HomePanel] DailyXp section hidden — success={}", response != null ? response.isSuccess() : "response was null");
                         clanActivitySection.setVisible(false);
                     }
                 }),
