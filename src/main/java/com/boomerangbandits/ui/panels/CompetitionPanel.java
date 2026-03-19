@@ -37,7 +37,7 @@ import java.util.function.Consumer;
  * Uses show/hide instead of CardLayout to avoid height-retention bug.
  */
 @Slf4j
-public class CompetitionPanel extends JPanel {
+public class CompetitionPanel extends JPanel implements Scrollable {
 
     private static final ZoneId SYDNEY = ZoneId.of("Australia/Sydney");
     private static final DateTimeFormatter INPUT_FMT = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
@@ -511,7 +511,7 @@ public class CompetitionPanel extends JPanel {
         c.insets = new java.awt.Insets(0, 0, 2, 0);
         card.add(title, c);
 
-        JLabel arrow = new AntialiasedLabel("›");
+        JLabel arrow = new AntialiasedLabel(">");
         arrow.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
         arrow.setFont(FontManager.getRunescapeBoldFont());
         c.gridx = 1;
@@ -650,7 +650,7 @@ public class CompetitionPanel extends JPanel {
         if (event.getEventType() != null && !event.getEventType().isEmpty()) {
             JLabel typeLabel = new AntialiasedLabel(UIConstants.capitalizeLower(event.getEventType()));
             typeLabel.setForeground(new Color(0x2196F3));
-            typeLabel.setFont(FontManager.getRunescapeBoldFont());
+            typeLabel.setFont(FontManager.getRunescapeSmallFont());
             typeLabel.setBorder(BorderFactory.createCompoundBorder(
                     BorderFactory.createLineBorder(new Color(0x2196F3)),
                     new EmptyBorder(0, 3, 0, 3)
@@ -667,7 +667,7 @@ public class CompetitionPanel extends JPanel {
         // LIVE / UPCOMING badge — col 2
         JLabel statusBadge = new AntialiasedLabel(isLive ? "LIVE" : "UPCOMING");
         statusBadge.setForeground(borderColor);
-        statusBadge.setFont(FontManager.getRunescapeBoldFont());
+        statusBadge.setFont(FontManager.getRunescapeSmallFont());
         c.gridx = 2;
         c.gridy = row;
         c.weightx = 0;
@@ -888,4 +888,36 @@ public class CompetitionPanel extends JPanel {
             this.endUtc = endUtc;
         }
     }
+
+    // =========================================================================
+    // Scrollable — tells JScrollPane to always size us to viewport width,
+    // never to our preferred width. This is the definitive fix for horizontal
+    // overflow (Layout Rule 0).
+    // =========================================================================
+
+    @Override
+    public Dimension getPreferredScrollableViewportSize() {
+        return getPreferredSize();
+    }
+
+    @Override
+    public int getScrollableUnitIncrement(Rectangle r, int o, int d) {
+        return 16;
+    }
+
+    @Override
+    public int getScrollableBlockIncrement(Rectangle r, int o, int d) {
+        return 16;
+    }
+
+    @Override
+    public boolean getScrollableTracksViewportWidth() {
+        return true;
+    }
+
+    @Override
+    public boolean getScrollableTracksViewportHeight() {
+        return false;
+    }
+
 }
