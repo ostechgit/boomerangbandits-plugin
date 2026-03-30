@@ -4,6 +4,7 @@ import com.boomerangbandits.BoomerangBanditsConfig;
 import com.boomerangbandits.api.WomApiService;
 import com.boomerangbandits.api.models.DailyXpResponse;
 import com.boomerangbandits.api.models.PlayerProfile;
+import com.boomerangbandits.api.models.PluginConfigResponse;
 import com.boomerangbandits.api.models.WomCompetition;
 import com.boomerangbandits.ui.UIConstants;
 import com.boomerangbandits.ui.components.AntialiasedLabel;
@@ -50,6 +51,8 @@ public class HomePanel extends JPanel {
     private JLabel statusLabel;
     private JPanel announcementSection;
     private JPanel announcementContent;
+    private JPanel bountySection;
+    private JPanel bountyContent;
     private JPanel competitionSection;
     private CountdownLabel competitionCountdown;
     private JPanel clanActivitySection;
@@ -79,6 +82,7 @@ public class HomePanel extends JPanel {
 
         buildGreetingSection();
         buildAnnouncementSection();
+        buildBountySection();
         buildChallengeSection();
         buildClanActivitySection();
         buildCompetitionSection();
@@ -118,28 +122,8 @@ public class HomePanel extends JPanel {
     }
 
     private void buildAnnouncementSection() {
-        announcementSection = new JPanel();
-        announcementSection.setLayout(new BoxLayout(announcementSection, BoxLayout.Y_AXIS));
-        announcementSection.setBackground(ColorScheme.DARKER_GRAY_COLOR);
-        announcementSection.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(0xFFC107)), // amber border
-                new EmptyBorder(
-                        UIConstants.PADDING_STANDARD,
-                        UIConstants.PADDING_STANDARD,
-                        UIConstants.PADDING_STANDARD,
-                        UIConstants.PADDING_STANDARD
-                )
-        ));
-        announcementSection.setAlignmentX(LEFT_ALIGNMENT);
-        announcementSection.setMaximumSize(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE));
-        announcementSection.setVisible(false);
-
-        JLabel header = new AntialiasedLabel("Announcements");
-        header.setForeground(new Color(0xFFC107));
-        header.setFont(FontManager.getRunescapeBoldFont());
-        header.setAlignmentX(LEFT_ALIGNMENT);
-        announcementSection.add(header);
-
+        announcementSection = createStyledSection(new Color(0xFFC107));
+        announcementSection.add(createSectionHeader("Announcements", new Color(0xFFC107)));
         announcementSection.add(Box.createVerticalStrut(UIConstants.SPACING_SMALL));
 
         announcementContent = new JPanel();
@@ -153,64 +137,25 @@ public class HomePanel extends JPanel {
     }
 
     private void buildChallengeSection() {
-        challengeSection = new JPanel();
-        challengeSection.setLayout(new BoxLayout(challengeSection, BoxLayout.Y_AXIS));
-        challengeSection.setBackground(ColorScheme.DARKER_GRAY_COLOR);
-        challengeSection.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(0xE65100)), // orange border — stands out
-                new EmptyBorder(
-                        UIConstants.PADDING_STANDARD,
-                        UIConstants.PADDING_STANDARD,
-                        UIConstants.PADDING_STANDARD,
-                        UIConstants.PADDING_STANDARD
-                )
-        ));
-        challengeSection.setAlignmentX(LEFT_ALIGNMENT);
-        challengeSection.setMaximumSize(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE));
-        challengeSection.setVisible(false);
+        challengeSection = createStyledSection(new Color(0xE65100));
 
         // Header row: "Daily Challenge" label + streak badge on the right
-        JPanel headerRow = new JPanel(new GridBagLayout());
-        headerRow.setBackground(ColorScheme.DARKER_GRAY_COLOR);
-        headerRow.setAlignmentX(LEFT_ALIGNMENT);
-        headerRow.setMaximumSize(new Dimension(Integer.MAX_VALUE, 20));
-
-        GridBagConstraints c = new GridBagConstraints();
-        c.gridx = 0;
-        c.gridy = 0;
-        c.weightx = 1.0;
-        c.fill = GridBagConstraints.HORIZONTAL;
-        c.anchor = GridBagConstraints.WEST;
         JLabel header = new AntialiasedLabel("Daily Challenge");
         header.setForeground(new Color(0xFF8C00));
         header.setFont(FontManager.getRunescapeBoldFont());
-        headerRow.add(header, c);
 
-        c.gridx = 1;
-        c.weightx = 0.0;
-        c.fill = GridBagConstraints.NONE;
-        c.anchor = GridBagConstraints.EAST;
         challengeStreakLabel = new AntialiasedLabel("Streak: --");
         challengeStreakLabel.setForeground(new Color(0xFFC107));
         challengeStreakLabel.setFont(FontManager.getRunescapeSmallFont());
-        headerRow.add(challengeStreakLabel, c);
+
+        JPanel headerRow = UIConstants.createKeyValueRow(header, challengeStreakLabel, ColorScheme.DARKER_GRAY_COLOR);
+        headerRow.setMaximumSize(new Dimension(Integer.MAX_VALUE, 20));
 
         challengeSection.add(headerRow);
         challengeSection.add(Box.createVerticalStrut(UIConstants.SPACING_SMALL));
 
-        // Challenge text — JTextArea for wrapping (Rule 15)
-        challengeText = new AntialiasedTextArea("Loading...");
-        challengeText.setEditable(false);
-        challengeText.setFocusable(false);
-        challengeText.setLineWrap(true);
-        challengeText.setWrapStyleWord(true);
-        challengeText.setColumns(0);
-        challengeText.setBackground(ColorScheme.DARKER_GRAY_COLOR);
-        challengeText.setForeground(Color.WHITE);
-        challengeText.setFont(FontManager.getRunescapeSmallFont());
-        challengeText.setBorder(null);
-        challengeText.setAlignmentX(LEFT_ALIGNMENT);
-        challengeText.setMaximumSize(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE));
+        // Challenge text — JTextArea for wrapping
+        challengeText = createWrappingTextArea("Loading...", Color.WHITE);
         challengeSection.add(challengeText);
 
         challengeSection.add(Box.createVerticalStrut(UIConstants.SPACING_SMALL));
@@ -226,29 +171,24 @@ public class HomePanel extends JPanel {
         add(Box.createVerticalStrut(UIConstants.SPACING_ITEM));
     }
 
+    private void buildBountySection() {
+        bountySection = createStyledSection(new Color(0xFFD700));
+        bountySection.add(createSectionHeader("Active Bounties", new Color(0xFFD700)));
+		bountySection.add(Box.createVerticalStrut(UIConstants.SPACING_SMALL));
+
+        bountyContent = new JPanel();
+        bountyContent.setLayout(new BoxLayout(bountyContent, BoxLayout.Y_AXIS));
+        bountyContent.setBackground(ColorScheme.DARKER_GRAY_COLOR);
+        bountyContent.setAlignmentX(LEFT_ALIGNMENT);
+        bountySection.add(bountyContent);
+
+        add(bountySection);
+        add(Box.createVerticalStrut(UIConstants.SPACING_ITEM));
+    }
+
     private void buildClanActivitySection() {
-        clanActivitySection = new JPanel();
-        clanActivitySection.setLayout(new BoxLayout(clanActivitySection, BoxLayout.Y_AXIS));
-        clanActivitySection.setBackground(ColorScheme.DARKER_GRAY_COLOR);
-        clanActivitySection.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(ColorScheme.MEDIUM_GRAY_COLOR),
-                new EmptyBorder(
-                        UIConstants.PADDING_STANDARD,
-                        UIConstants.PADDING_STANDARD,
-                        UIConstants.PADDING_STANDARD,
-                        UIConstants.PADDING_STANDARD
-                )
-        ));
-        clanActivitySection.setAlignmentX(LEFT_ALIGNMENT);
-        clanActivitySection.setMaximumSize(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE));
-        clanActivitySection.setVisible(false);
-
-        JLabel header = new AntialiasedLabel("Clan Activity Today");
-        header.setForeground(Color.WHITE);
-        header.setFont(FontManager.getRunescapeBoldFont());
-        header.setAlignmentX(LEFT_ALIGNMENT);
-        clanActivitySection.add(header);
-
+        clanActivitySection = createStyledSection(ColorScheme.MEDIUM_GRAY_COLOR);
+        clanActivitySection.add(createSectionHeader("Clan Activity Today", Color.WHITE));
         clanActivitySection.add(Box.createVerticalStrut(UIConstants.SPACING_SMALL));
 
         add(clanActivitySection);
@@ -256,27 +196,9 @@ public class HomePanel extends JPanel {
     }
 
     private void buildCompetitionSection() {
-        competitionSection = new JPanel();
-        competitionSection.setLayout(new BoxLayout(competitionSection, BoxLayout.Y_AXIS));
-        competitionSection.setBackground(ColorScheme.DARKER_GRAY_COLOR);
-        competitionSection.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(ColorScheme.MEDIUM_GRAY_COLOR),
-                new EmptyBorder(
-                        UIConstants.PADDING_STANDARD,
-                        UIConstants.PADDING_STANDARD,
-                        UIConstants.PADDING_STANDARD,
-                        UIConstants.PADDING_STANDARD
-                )
-        ));
-        competitionSection.setAlignmentX(LEFT_ALIGNMENT);
-        competitionSection.setMaximumSize(new java.awt.Dimension(Integer.MAX_VALUE, 100));
-        competitionSection.setVisible(false);
-
-        JLabel header = new AntialiasedLabel("Active Competition");
-        header.setForeground(Color.WHITE);
-        header.setFont(FontManager.getRunescapeBoldFont());
-        header.setAlignmentX(LEFT_ALIGNMENT);
-        competitionSection.add(header);
+        competitionSection = createStyledSection(ColorScheme.MEDIUM_GRAY_COLOR);
+        competitionSection.setMaximumSize(new Dimension(Integer.MAX_VALUE, 100));
+        competitionSection.add(createSectionHeader("Active Competition", Color.WHITE));
 
         competitionCountdown = new CountdownLabel("Ends in: ");
         competitionCountdown.setAlignmentX(LEFT_ALIGNMENT);
@@ -362,15 +284,7 @@ public class HomePanel extends JPanel {
                 itemPanel.setAlignmentX(LEFT_ALIGNMENT);
                 itemPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE));
 
-                AntialiasedTextArea textArea = new AntialiasedTextArea(message);
-                textArea.setEditable(false);
-                textArea.setFocusable(false);
-                textArea.setLineWrap(true);
-                textArea.setWrapStyleWord(true);
-                textArea.setColumns(0);
-                textArea.setBackground(ColorScheme.DARKER_GRAY_COLOR);
-                textArea.setForeground(new Color(0xFFC107)); // amber
-                textArea.setFont(FontManager.getRunescapeSmallFont());
+                AntialiasedTextArea textArea = createWrappingTextArea(message, new Color(0xFFC107));
                 textArea.setBorder(new EmptyBorder(2, UIConstants.PADDING_SMALL, 2, 0));
 
                 itemPanel.add(textArea, BorderLayout.CENTER);
@@ -381,6 +295,76 @@ public class HomePanel extends JPanel {
             announcementSection.setVisible(hasContent);
             announcementSection.revalidate();
             announcementSection.repaint();
+        });
+    }
+
+    public void updateBountySection(List<PluginConfigResponse.Bounty> bounties) {
+        SwingUtilities.invokeLater(() -> {
+            bountyContent.removeAll();
+
+            if (bounties == null || bounties.isEmpty()) {
+                bountySection.setVisible(false);
+                return;
+            }
+
+            for (PluginConfigResponse.Bounty bounty : bounties) {
+                if (bounty == null) {
+                    continue;
+                }
+
+                if (bountyContent.getComponentCount() > 0) {
+                    bountyContent.add(Box.createVerticalStrut(UIConstants.SPACING_SMALL));
+                }
+
+                JPanel card = new JPanel();
+                card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
+                card.setBackground(ColorScheme.DARKER_GRAY_COLOR);
+                card.setBorder(BorderFactory.createCompoundBorder(
+                        BorderFactory.createMatteBorder(0, 2, 0, 0, new Color(0xFFD700)),
+                        new EmptyBorder(2, UIConstants.PADDING_SMALL, 2, 0)
+                ));
+                card.setAlignmentX(LEFT_ALIGNMENT);
+                card.setMaximumSize(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE));
+
+                String name = bounty.getName() != null ? bounty.getName() : "Unnamed Bounty";
+                JLabel nameLabel = new AntialiasedLabel(name);
+                nameLabel.setForeground(Color.WHITE);
+                nameLabel.setFont(FontManager.getRunescapeBoldFont());
+                nameLabel.setAlignmentX(LEFT_ALIGNMENT);
+                card.add(nameLabel);
+
+                String description = bounty.getDescription();
+                if (description != null && !description.trim().isEmpty()) {
+                    AntialiasedTextArea descriptionArea = createWrappingTextArea(description, ColorScheme.LIGHT_GRAY_COLOR);
+                    descriptionArea.setBorder(new EmptyBorder(2, 0, 0, 0));
+                    descriptionArea.setAlignmentX(LEFT_ALIGNMENT);
+                    card.add(descriptionArea);
+                }
+
+                if (bounty.getItems() != null && !bounty.getItems().isEmpty()) {
+                    String joinedItems = bounty.getItems().stream()
+                            .map(item -> item != null ? item.getName() : null)
+                            .filter(itemName -> itemName != null && !itemName.trim().isEmpty())
+                            .reduce((left, right) -> left + ", " + right)
+                            .orElse("");
+
+                    if (!joinedItems.isEmpty()) {
+                        JLabel itemLabel = new AntialiasedLabel(joinedItems);
+                        itemLabel.setForeground(new Color(0xA0A0A0));
+                        itemLabel.setFont(FontManager.getRunescapeSmallFont());
+                        itemLabel.setBorder(new EmptyBorder(2, 0, 0, 0));
+                        itemLabel.setAlignmentX(LEFT_ALIGNMENT);
+                        card.add(itemLabel);
+                    }
+                }
+
+                bountyContent.add(card);
+            }
+
+            boolean hasContent = bountyContent.getComponentCount() > 0;
+            bountySection.setVisible(hasContent);
+            bountySection.revalidate();
+            bountySection.repaint();
         });
     }
 
@@ -592,34 +576,15 @@ public class HomePanel extends JPanel {
     }
 
     private void addStatRow(String label, String value, JPanel target) {
-        JPanel row = new JPanel(new GridBagLayout());
-        row.setBackground(ColorScheme.DARKER_GRAY_COLOR);
-        row.setAlignmentX(LEFT_ALIGNMENT);
-
-        GridBagConstraints c = new GridBagConstraints();
-
-        c.gridx = 0;
-        c.gridy = 0;
-        c.weightx = 1.0;
-        c.fill = GridBagConstraints.HORIZONTAL;
-        c.anchor = GridBagConstraints.WEST;
-        c.insets = new Insets(0, 0, 0, 4);
         JLabel leftLabel = new AntialiasedLabel(label);
         leftLabel.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
         leftLabel.setFont(FontManager.getRunescapeSmallFont());
-        row.add(leftLabel, c);
 
-        c.gridx = 1;
-        c.weightx = 0.0;
-        c.fill = GridBagConstraints.NONE;
-        c.anchor = GridBagConstraints.EAST;
-        c.insets = new Insets(0, 0, 0, 0);
         JLabel rightLabel = new AntialiasedLabel(value);
         rightLabel.setForeground(new Color(0x4CAF50));
         rightLabel.setFont(FontManager.getRunescapeBoldFont());
-        row.add(rightLabel, c);
 
-        target.add(row);
+        target.add(UIConstants.createKeyValueRow(leftLabel, rightLabel, ColorScheme.DARKER_GRAY_COLOR));
     }
 
     private String formatXP(long xp) {
@@ -630,5 +595,61 @@ public class HomePanel extends JPanel {
         } else {
             return String.valueOf(xp);
         }
+    }
+
+    // ======================================================================
+    // UI HELPERS
+    // ======================================================================
+
+    /**
+     * Create a styled section panel with border, background, and standard layout.
+     */
+    private JPanel createStyledSection(Color borderColor) {
+        JPanel section = new JPanel();
+        section.setLayout(new BoxLayout(section, BoxLayout.Y_AXIS));
+        section.setBackground(ColorScheme.DARKER_GRAY_COLOR);
+        section.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(borderColor),
+                new EmptyBorder(
+                        UIConstants.PADDING_STANDARD,
+                        UIConstants.PADDING_STANDARD,
+                        UIConstants.PADDING_STANDARD,
+                        UIConstants.PADDING_STANDARD
+                )
+        ));
+        section.setAlignmentX(LEFT_ALIGNMENT);
+        section.setMaximumSize(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE));
+        section.setVisible(false);
+        return section;
+    }
+
+    /**
+     * Create a bold header label for a section.
+     */
+    private JLabel createSectionHeader(String text, Color color) {
+        JLabel header = new AntialiasedLabel(text);
+        header.setForeground(color);
+        header.setFont(FontManager.getRunescapeBoldFont());
+        header.setAlignmentX(LEFT_ALIGNMENT);
+        return header;
+    }
+
+    /**
+     * Create a read-only wrapping text area for section content.
+     */
+    private AntialiasedTextArea createWrappingTextArea(String text, Color foreground) {
+        AntialiasedTextArea area = new AntialiasedTextArea(text);
+        area.setEditable(false);
+        area.setFocusable(false);
+        area.setLineWrap(true);
+        area.setWrapStyleWord(true);
+        area.setColumns(0);
+        area.setBackground(ColorScheme.DARKER_GRAY_COLOR);
+        area.setForeground(foreground);
+        area.setFont(FontManager.getRunescapeSmallFont());
+        area.setBorder(null);
+        area.setAlignmentX(LEFT_ALIGNMENT);
+        area.setMaximumSize(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE));
+        return area;
     }
 }

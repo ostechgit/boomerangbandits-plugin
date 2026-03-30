@@ -1,6 +1,7 @@
 package com.boomerangbandits.ui;
 
 import java.awt.*;
+import javax.swing.*;
 
 /**
  * Centralized UI constants for consistent styling across all panels.
@@ -168,5 +169,35 @@ public class UIConstants {
     public static String capitalizeLower(String str) {
         if (str == null || str.isEmpty()) return str;
         return str.substring(0, 1).toUpperCase() + str.substring(1).toLowerCase();
+    }
+
+    /**
+     * Create a left-right key-value row using GridBagLayout.
+     * Left label stretches to fill, right label anchors to the east.
+     * Callers can further customize the returned panel (maxSize, border, etc).
+     */
+    public static JPanel createKeyValueRow(JLabel left, JLabel right, Color background) {
+        JPanel row = new JPanel(new GridBagLayout());
+        row.setBackground(background);
+        row.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        GridBagConstraints c = new GridBagConstraints();
+        c.gridy = 0;
+
+        c.gridx = 0;
+        c.weightx = 1.0;
+        c.fill = GridBagConstraints.HORIZONTAL;
+        c.anchor = GridBagConstraints.WEST;
+        c.insets = new Insets(0, 0, 0, 4);
+        row.add(left, c);
+
+        c.gridx = 1;
+        c.weightx = 0.0;
+        c.fill = GridBagConstraints.NONE;
+        c.anchor = GridBagConstraints.EAST;
+        c.insets = new Insets(0, 0, 0, 0);
+        row.add(right, c);
+
+        return row;
     }
 }

@@ -204,35 +204,17 @@ public class ClanHubPanel extends JPanel implements Scrollable {
     }
 
     private JPanel buildRankRow(String rank, int count) {
-        JPanel row = new JPanel(new GridBagLayout());
-        row.setBackground(ColorScheme.DARK_GRAY_COLOR);
-        row.setAlignmentX(LEFT_ALIGNMENT);
-        row.setMaximumSize(new Dimension(Integer.MAX_VALUE, 22));
-        row.setBorder(new EmptyBorder(2, 0, 2, 0));
-
-        GridBagConstraints c = new GridBagConstraints();
-
-        c.gridx = 0;
-        c.gridy = 0;
-        c.weightx = 1.0;
-        c.fill = GridBagConstraints.HORIZONTAL;
-        c.anchor = GridBagConstraints.WEST;
-        c.insets = new Insets(0, 0, 0, 4);
         JLabel rankLabel = new AntialiasedLabel(rank);
         rankLabel.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
         rankLabel.setFont(FontManager.getRunescapeSmallFont());
-        row.add(rankLabel, c);
 
-        c.gridx = 1;
-        c.weightx = 0.0;
-        c.fill = GridBagConstraints.NONE;
-        c.anchor = GridBagConstraints.EAST;
-        c.insets = new Insets(0, 0, 0, 0);
         JLabel countLabel = new AntialiasedLabel(count + " members");
         countLabel.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
         countLabel.setFont(FontManager.getRunescapeSmallFont());
-        row.add(countLabel, c);
 
+        JPanel row = UIConstants.createKeyValueRow(rankLabel, countLabel, ColorScheme.DARK_GRAY_COLOR);
+        row.setMaximumSize(new Dimension(Integer.MAX_VALUE, 22));
+        row.setBorder(new EmptyBorder(2, 0, 2, 0));
         return row;
     }
 
@@ -365,36 +347,21 @@ public class ClanHubPanel extends JPanel implements Scrollable {
     }
 
     private JPanel createPointsRow(String activity, String points) {
-        JPanel row = new JPanel(new GridBagLayout());
-        row.setBackground(ColorScheme.DARKER_GRAY_COLOR);
+        JLabel actLabel = new AntialiasedLabel(activity);
+        actLabel.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
+        actLabel.setFont(FontManager.getRunescapeSmallFont());
+
+        JLabel ptsLabel = new AntialiasedLabel(points);
+        ptsLabel.setForeground(new Color(0x4CAF50));
+        ptsLabel.setFont(FontManager.getRunescapeBoldFont());
+
+        JPanel row = UIConstants.createKeyValueRow(actLabel, ptsLabel, ColorScheme.DARKER_GRAY_COLOR);
         row.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createMatteBorder(0, 0, 1, 0, ColorScheme.DARK_GRAY_COLOR),
                 new EmptyBorder(UIConstants.SPACING_SMALL, UIConstants.PADDING_STANDARD,
                         UIConstants.SPACING_SMALL, UIConstants.PADDING_STANDARD)
         ));
-        row.setAlignmentX(LEFT_ALIGNMENT);
         row.setMaximumSize(new Dimension(Integer.MAX_VALUE, 28));
-
-        GridBagConstraints c = new GridBagConstraints();
-
-        JLabel actLabel = new AntialiasedLabel(activity);
-        actLabel.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
-        actLabel.setFont(FontManager.getRunescapeSmallFont());
-        c.gridx = 0;
-        c.weightx = 1.0;
-        c.fill = GridBagConstraints.HORIZONTAL;
-        c.anchor = GridBagConstraints.WEST;
-        row.add(actLabel, c);
-
-        JLabel ptsLabel = new AntialiasedLabel(points);
-        ptsLabel.setForeground(new Color(0x4CAF50));
-        ptsLabel.setFont(FontManager.getRunescapeBoldFont());
-        c.gridx = 1;
-        c.weightx = 0.0;
-        c.fill = GridBagConstraints.NONE;
-        c.anchor = GridBagConstraints.EAST;
-        row.add(ptsLabel, c);
-
         return row;
     }
 

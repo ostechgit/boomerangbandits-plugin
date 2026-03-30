@@ -1,6 +1,5 @@
 package com.boomerangbandits.services;
 
-import com.boomerangbandits.BoomerangBanditsConfig;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.ChatMessageType;
 import net.runelite.api.events.ChatMessage;
@@ -36,11 +35,11 @@ public class CofferDepositSoundService {
     private AudioPlayer audioPlayer;
 
     @Inject
-    private BoomerangBanditsConfig config;
+    private FeatureFlagService featureFlagService;
 
     @Subscribe
     public void onChatMessage(ChatMessage event) {
-        if (!config.cofferDepositSound()) {
+        if (!featureFlagService.isCofferSoundEnabled()) {
             return;
         }
 

@@ -5,6 +5,7 @@ import com.boomerangbandits.api.ClanApiService;
 import com.boomerangbandits.api.models.PluginConfigResponse;
 import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
+import lombok.Getter;
 import net.runelite.client.config.ConfigManager;
 
 import javax.inject.Inject;
@@ -41,6 +42,9 @@ public class ConfigSyncService {
     private Gson gson;
 
     private ScheduledFuture<?> syncTask;
+
+    @Getter
+    private volatile PluginConfigResponse latestConfig;
 
     /**
      * Start periodic config sync. Call only after authentication succeeds.
@@ -99,6 +103,7 @@ public class ConfigSyncService {
     }
 
     private void applyConfig(PluginConfigResponse remoteConfig) {
+        this.latestConfig = remoteConfig;
         setIfChanged("announcementMessage", remoteConfig.getAnnouncementMessage());
         setIfChanged("rollCallActive", String.valueOf(remoteConfig.isRollCallActive()));
         setIfChanged("websiteUrl", remoteConfig.getWebsiteUrl());
