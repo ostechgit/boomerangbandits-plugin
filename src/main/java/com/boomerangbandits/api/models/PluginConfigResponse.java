@@ -13,15 +13,9 @@ import lombok.Data;
  */
 @Data
 public class PluginConfigResponse {
-    private String clanName;
-    private int minimumClanRank;
+    private boolean rollCallActive;
     private String announcementMessage;
     private List<String> announcements;
-    private boolean rollCallActive;
-    private String activeRollCallId;
-    private boolean sotwActive;
-    private boolean botmActive;
-    private boolean teamEventActive;
     private String websiteUrl;
 
     /**

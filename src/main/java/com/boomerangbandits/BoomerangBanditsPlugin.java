@@ -6,6 +6,7 @@ import com.boomerangbandits.api.WomApiService.SyncMember;
 import com.boomerangbandits.services.CompetitionScheduler;
 import com.boomerangbandits.services.ConfigSyncService;
 import com.boomerangbandits.services.EventAttendanceTracker;
+import com.boomerangbandits.services.InGameAnnouncementService;
 import com.boomerangbandits.ui.BoomerangPanel;
 import com.boomerangbandits.ui.EventOverlay;
 import com.boomerangbandits.util.ClanValidator;
@@ -103,6 +104,8 @@ public class BoomerangBanditsPlugin extends Plugin {
     // Sound effects
     @Inject
     private com.boomerangbandits.services.CofferDepositSoundService cofferDepositSoundService;
+    @Inject
+    private InGameAnnouncementService inGameAnnouncementService;
 
     // Phase 6: Overlay
     @Inject
@@ -288,6 +291,8 @@ public class BoomerangBanditsPlugin extends Plugin {
                 }
                 // Announcements are local config — safe to update without auth
                 panel.getHomePanel().updateAnnouncements(parseAnnouncements());
+                // Also deliver new announcements to in-game chat
+                inGameAnnouncementService.deliverAnnouncements(parseAnnouncements());
 
                 // Update admin visibility if admin rank threshold changed
                 if (event.getKey().equals("adminRankThreshold")) {
@@ -431,6 +436,7 @@ public class BoomerangBanditsPlugin extends Plugin {
         womApi.setAuthToken(null);
         womApi.setAccountHash(-1);
         nameChangesSubmitted = false;
+        inGameAnnouncementService.reset();
         clanValidator.reset(); // Reset clan validation cache
         SwingUtilities.invokeLater(() -> panel.onLogout());
     }
@@ -515,6 +521,8 @@ public class BoomerangBanditsPlugin extends Plugin {
                         SwingUtilities.invokeLater(() -> {
                             panel.onAuthenticated();
                             panel.getHomePanel().updateAnnouncements(parseAnnouncements());
+                            // Deliver announcements to in-game chat on first auth
+                            inGameAnnouncementService.deliverAnnouncements(parseAnnouncements());
                             // Update admin visibility after authentication
                             panel.updateAdminVisibility();
                         });
