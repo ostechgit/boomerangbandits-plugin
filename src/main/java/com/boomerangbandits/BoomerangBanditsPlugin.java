@@ -360,6 +360,18 @@ public class BoomerangBanditsPlugin extends Plugin {
                     log.info("Manual name change sync triggered via ::syncrsns");
                     clientThread.invoke(this::submitNameChanges);
                     break;
+
+                case "testbounty":
+                    if (!authenticated) {
+                        log.debug("::testbounty blocked — not authenticated");
+                        return;
+                    }
+                    if (bountyManager.triggerTestBounty()) {
+                        log.info("Test bounty triggered — screenshot + chat + backend POST fired");
+                    } else {
+                        log.warn("No active bounties in manifest config — nothing to test");
+                    }
+                    break;
             }
         } catch (Exception e) {
             log.error("Error handling command", e);
@@ -524,6 +536,15 @@ public class BoomerangBanditsPlugin extends Plugin {
 
                         // Start config sync now that we have a member code
                         configSyncService.start(executor);
+                        configSyncService.setOnConfigUpdated(() -> SwingUtilities.invokeLater(() -> {
+                            panel.getHomePanel().updateBountySection(
+                                    configSyncService.getLatestConfig() != null
+                                            ? configSyncService.getLatestConfig().getBounties()
+                                            : null
+                            );
+                            panel.getHomePanel().updateAnnouncements(parseAnnouncements());
+                            inGameAnnouncementService.deliverAnnouncements(parseAnnouncements());
+                        }));
 
                         // Start competition scheduler
                         competitionScheduler.start(executor);

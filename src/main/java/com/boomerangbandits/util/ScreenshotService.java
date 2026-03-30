@@ -45,13 +45,10 @@ public class ScreenshotService
 
 		clientThread.invokeLater(() ->
 		{
-			Widget chat = client.getWidget(InterfaceID.Chatbox.CHATAREA);
 			Widget pm = client.getWidget(InterfaceID.PmChat.CONTAINER);
 
-			boolean chatWasVisible = chat != null && !chat.isHidden();
 			boolean pmWasVisible = pm != null && !pm.isHidden();
 
-			if (chatWasVisible) chat.setHidden(true);
 			if (pmWasVisible) pm.setHidden(true);
 
 			try
@@ -83,12 +80,11 @@ public class ScreenshotService
 					finally
 					{
 						// Always restore widgets on client thread after frame capture
-						if (chatWasVisible || pmWasVisible)
+						if (pmWasVisible)
 						{
 							clientThread.invoke(() ->
 							{
-								if (chatWasVisible && chat != null) chat.setHidden(false);
-								if (pmWasVisible && pm != null) pm.setHidden(false);
+								if (pm != null) pm.setHidden(false);
 								return true;
 							});
 						}
@@ -98,7 +94,6 @@ public class ScreenshotService
 			catch (Exception e)
 			{
 				// requestNextFrameListener failed — restore widgets immediately (already on client thread)
-				if (chatWasVisible && chat != null) chat.setHidden(false);
 				if (pmWasVisible && pm != null) pm.setHidden(false);
 				log.error("Failed to request screenshot frame", e);
 				result.complete(null);
