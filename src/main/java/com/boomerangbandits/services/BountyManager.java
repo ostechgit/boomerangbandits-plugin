@@ -1,6 +1,7 @@
 package com.boomerangbandits.services;
 
 import com.boomerangbandits.api.models.PluginConfigResponse;
+import com.boomerangbandits.api.ClanApiService;
 import com.boomerangbandits.util.ScreenshotService;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -15,6 +16,7 @@ import net.runelite.client.chat.ChatMessageManager;
 import net.runelite.client.chat.QueuedMessage;
 import net.runelite.client.eventbus.EventBus;
 import net.runelite.client.eventbus.Subscribe;
+import net.runelite.client.plugins.loottracker.LootReceived;
 import net.runelite.client.util.Text;
 
 import javax.inject.Inject;
@@ -36,6 +38,7 @@ public class BountyManager {
     private final ChatMessageManager chatMessageManager;
     private final Client client;
     private final FeatureFlagService featureFlagService;
+    private final ClanApiService clanApi;
     private final ConcurrentLinkedQueue<NpcSpawnEntry> recentNpcSpawns = new ConcurrentLinkedQueue<>();
 
     @Inject
@@ -45,7 +48,8 @@ public class BountyManager {
             ScreenshotService screenshotService,
             ChatMessageManager chatMessageManager,
             Client client,
-            FeatureFlagService featureFlagService
+            FeatureFlagService featureFlagService,
+            ClanApiService clanApi
     ) {
         this.eventBus = eventBus;
         this.configSyncService = configSyncService;
@@ -53,6 +57,7 @@ public class BountyManager {
         this.chatMessageManager = chatMessageManager;
         this.client = client;
         this.featureFlagService = featureFlagService;
+        this.clanApi = clanApi;
     }
 
     @Getter
@@ -130,6 +135,39 @@ public class BountyManager {
         }
     }
 
+    @Subscribe
+    public void onLootReceived(LootReceived event) {
+        if (!featureFlagService.isBountyTrackingEnabled() || event.getItems() == null || event.getItems().isEmpty()) {
+            return;
+        }
+
+        PluginConfigResponse latest = configSyncService.getLatestConfig();
+        if (latest == null || latest.getBounties() == null || latest.getBounties().isEmpty()) {
+            return;
+        }
+
+        for (PluginConfigResponse.Bounty bounty : latest.getBounties()) {
+            if (bounty == null || bounty.getItems() == null) {
+                continue;
+            }
+
+            for (PluginConfigResponse.BountyItem item : bounty.getItems()) {
+                if (item == null || item.getItemId() <= 0) {
+                    continue;
+                }
+
+                if (item.getNpcIds() != null && !item.getNpcIds().isEmpty()) {
+                    continue;
+                }
+
+                if (hasLootItemMatch(event, item.getItemId())) {
+                    onBountyCompleted(bounty, item);
+                    return;
+                }
+            }
+        }
+    }
+
     public void startUp() {
         eventBus.register(this);
     }
@@ -160,17 +198,36 @@ public class BountyManager {
         return false;
     }
 
+    private boolean hasLootItemMatch(LootReceived event, int itemId) {
+        return event.getItems().stream().anyMatch(itemStack -> itemStack.getId() == itemId);
+    }
+
     private void onBountyCompleted(PluginConfigResponse.Bounty bounty, PluginConfigResponse.BountyItem item) {
         String bountyId = bounty.getId() != null ? bounty.getId() : "unknown";
         String itemName = item.getName() != null ? item.getName() : "Unknown Item";
+        int itemId = item.getItemId();
+        String rsn = client.getLocalPlayer() != null ? client.getLocalPlayer().getName() : "Unknown";
 
         screenshotService.captureScreenshot().thenAccept(base64 -> {
-            log.info("Bounty completed: {} - {}", bountyId, itemName);
+            log.info("Bounty completed: {} - {} (rsn={})", bountyId, itemName, rsn);
 
             chatMessageManager.queue(QueuedMessage.builder()
                     .type(ChatMessageType.BROADCAST)
                     .runeLiteFormattedMessage("<col=FFD700>[Boomerang Bandits]</col> Bounty completed: " + itemName)
                     .build());
+
+            clanApi.submitBountyCompletion(bountyId, itemName, itemId, rsn, base64,
+                    response -> {
+                        if (response.isSuccess()) {
+                            log.info("Bounty completion submitted to backend: {} - {}", bountyId, itemName);
+                        } else {
+                            log.warn("Backend rejected bounty completion: {} - {}: {}",
+                                    bountyId, itemName, response.getMessage());
+                        }
+                    },
+                    error -> log.warn("Failed to submit bounty completion: {} - {}: {}",
+                            bountyId, itemName, error)
+            );
         });
     }
 }
