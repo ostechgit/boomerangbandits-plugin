@@ -13,6 +13,7 @@ import com.boomerangbandits.services.InGameAnnouncementService;
 import com.boomerangbandits.ui.BoomerangPanel;
 import com.boomerangbandits.ui.EventOverlay;
 import com.boomerangbandits.util.ClanValidator;
+import com.boomerangbandits.util.PopupNotificationService;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Binder;
@@ -115,6 +116,8 @@ public class BoomerangBanditsPlugin extends Plugin {
     private NPCRenameManager npcRenameManager;
     @Inject
     private BountyManager bountyManager;
+    @Inject
+    private PopupNotificationService popupNotificationService;
 
     // Phase 6: Overlay
     @Inject
@@ -385,6 +388,7 @@ public class BoomerangBanditsPlugin extends Plugin {
     @Subscribe
     public void onGameTick(GameTick event) {
         attendanceTracker.onGameTick();
+        popupNotificationService.processQueue();
     }
 
     @Subscribe

@@ -3,6 +3,7 @@ package com.boomerangbandits.services;
 import com.boomerangbandits.api.models.PluginConfigResponse;
 import com.boomerangbandits.api.ClanApiService;
 import com.boomerangbandits.util.ScreenshotService;
+import com.boomerangbandits.util.PopupNotificationService;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import com.google.common.collect.ImmutableSet;
@@ -26,6 +27,7 @@ import net.runelite.client.util.Text;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.awt.Color;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
@@ -56,6 +58,7 @@ public class BountyManager {
     private final Client client;
     private final FeatureFlagService featureFlagService;
     private final ClanApiService clanApi;
+    private final PopupNotificationService popupService;
     private final ConcurrentLinkedQueue<NpcSpawnEntry> recentNpcSpawns = new ConcurrentLinkedQueue<>();
 
     @Inject
@@ -66,7 +69,8 @@ public class BountyManager {
             ChatMessageManager chatMessageManager,
             Client client,
             FeatureFlagService featureFlagService,
-            ClanApiService clanApi
+            ClanApiService clanApi,
+            PopupNotificationService popupService
     ) {
         this.eventBus = eventBus;
         this.configSyncService = configSyncService;
@@ -75,6 +79,7 @@ public class BountyManager {
         this.client = client;
         this.featureFlagService = featureFlagService;
         this.clanApi = clanApi;
+        this.popupService = popupService;
     }
 
     @Getter
@@ -276,6 +281,9 @@ public class BountyManager {
 
         screenshotService.captureScreenshot().thenAccept(base64 -> {
             log.info("Bounty completed: {} - {} (rsn={})", bountyId, itemName, rsn);
+
+            // Show native OSRS popup (same as collection log notification)
+            popupService.showPopup("Bounty Complete", itemName);
 
             chatMessageManager.queue(QueuedMessage.builder()
                     .type(ChatMessageType.BROADCAST)
