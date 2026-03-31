@@ -597,6 +597,12 @@ public class CompetitionPanel extends JPanel implements Scrollable {
             none.setAlignmentX(LEFT_ALIGNMENT);
             eventCardContainer.add(none);
         } else {
+            // Sort: LIVE events first, then upcoming
+            events.sort((a, b) -> {
+                boolean aLive = isEventLive(a);
+                boolean bLive = isEventLive(b);
+                return Boolean.compare(bLive, aLive);
+            });
             for (EventDetails event : events) {
                 JPanel card = buildEventCard(event);
                 card.setAlignmentX(LEFT_ALIGNMENT);
@@ -609,15 +615,18 @@ public class CompetitionPanel extends JPanel implements Scrollable {
         eventCardContainer.repaint();
     }
 
-    private JPanel buildEventCard(EventDetails event) {
-        // Determine live vs upcoming from startTime
-        boolean isLive = true;
+    private static boolean isEventLive(EventDetails event) {
         if (event.getStartTime() != null && !event.getStartTime().isEmpty()) {
             try {
-                isLive = Instant.parse(event.getStartTime()).isBefore(Instant.now());
+                return Instant.parse(event.getStartTime()).isBefore(Instant.now());
             } catch (Exception ignored) {
             }
         }
+        return true;
+    }
+
+    private JPanel buildEventCard(EventDetails event) {
+        boolean isLive = isEventLive(event);
 
         Color borderColor = isLive ? new Color(0x4CAF50) : new Color(0xFFC107);
 
