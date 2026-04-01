@@ -13,8 +13,8 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.annotation.Nullable;
 import java.awt.Color;
-import java.util.ArrayDeque;
 import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
  * Shows native OSRS notification popups (same widget as collection log notifications).
@@ -43,7 +43,7 @@ public class PopupNotificationService {
     @Inject
     private ClientThread clientThread;
 
-    private final Queue<PopupData> popupQueue = new ArrayDeque<>();
+    private final Queue<PopupData> popupQueue = new ConcurrentLinkedQueue<>();
 
     /**
      * Queue a popup with full customisation.

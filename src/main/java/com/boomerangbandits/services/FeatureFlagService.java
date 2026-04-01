@@ -45,7 +45,7 @@ public class FeatureFlagService {
     }
 
     public boolean isEasterEggsEnabled() {
-        return isEnabled("easterEggs", () -> true);
+        return isEnabled("easterEggs", config::enableEasterEggs);
     }
 
     public boolean isBountyTrackingEnabled() {

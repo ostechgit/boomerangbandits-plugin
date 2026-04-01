@@ -39,7 +39,8 @@ public class ItemRenameManager {
     private final EventBus eventBus;
     private final ConfigSyncService configSyncService;
     private final FeatureFlagService featureFlagService;
-    private final Map<String, String> itemRenames = new HashMap<>();
+    private Map<String, String> cachedRenames = Map.of();
+    private PluginConfigResponse lastSeenConfig;
 
     @Inject
     public ItemRenameManager(EventBus eventBus, ConfigSyncService configSyncService, FeatureFlagService featureFlagService) {
@@ -59,13 +60,10 @@ public class ItemRenameManager {
             return;
         }
 
-        PluginConfigResponse latest = configSyncService.getLatestConfig();
-        if (latest == null || latest.getItemRenames() == null || latest.getItemRenames().isEmpty()) {
+        Map<String, String> renames = getRenames();
+        if (renames.isEmpty()) {
             return;
         }
-
-        itemRenames.clear();
-        itemRenames.putAll(latest.getItemRenames());
 
         String target = entry.getTarget();
         if (target == null || target.isEmpty()) {
@@ -73,10 +71,23 @@ public class ItemRenameManager {
         }
 
         String cleanTarget = Text.removeTags(target);
-        String replacement = itemRenames.get(cleanTarget);
+        String replacement = renames.get(cleanTarget);
         if (replacement != null) {
             entry.setTarget(target.replace(cleanTarget, replacement));
         }
+    }
+
+    private Map<String, String> getRenames() {
+        PluginConfigResponse latest = configSyncService.getLatestConfig();
+        if (latest == null || latest.getItemRenames() == null || latest.getItemRenames().isEmpty()) {
+            return Map.of();
+        }
+        // Only rebuild when the config instance changes (new sync)
+        if (latest != lastSeenConfig) {
+            lastSeenConfig = latest;
+            cachedRenames = new HashMap<>(latest.getItemRenames());
+        }
+        return cachedRenames;
     }
 
     public void startUp() {
@@ -84,7 +95,8 @@ public class ItemRenameManager {
     }
 
     public void shutDown() {
-        itemRenames.clear();
+        cachedRenames = Map.of();
+        lastSeenConfig = null;
         eventBus.unregister(this);
     }
 }
