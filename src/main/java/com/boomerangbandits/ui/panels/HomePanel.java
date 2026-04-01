@@ -172,8 +172,9 @@ public class HomePanel extends JPanel {
     }
 
     private void buildBountySection() {
-        bountySection = createStyledSection(new Color(0xFFD700));
-        bountySection.add(createSectionHeader("Active Bounties", new Color(0xFFD700)));
+        Color bountyGreen = new Color(0x4CAF50);
+        bountySection = createStyledSection(bountyGreen);
+        bountySection.add(createSectionHeader("Active Bounties", bountyGreen));
 		bountySection.add(Box.createVerticalStrut(UIConstants.SPACING_SMALL));
 
         bountyContent = new JPanel();
@@ -320,7 +321,7 @@ public class HomePanel extends JPanel {
                 card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
                 card.setBackground(ColorScheme.DARKER_GRAY_COLOR);
                 card.setBorder(BorderFactory.createCompoundBorder(
-                        BorderFactory.createMatteBorder(0, 2, 0, 0, new Color(0xFFD700)),
+                        BorderFactory.createMatteBorder(0, 2, 0, 0, new Color(0x81C784)),
                         new EmptyBorder(2, UIConstants.PADDING_SMALL, 2, 0)
                 ));
                 card.setAlignmentX(LEFT_ALIGNMENT);
@@ -332,14 +333,6 @@ public class HomePanel extends JPanel {
                 nameLabel.setFont(FontManager.getRunescapeBoldFont());
                 nameLabel.setAlignmentX(LEFT_ALIGNMENT);
                 card.add(nameLabel);
-
-                String description = bounty.getDescription();
-                if (description != null && !description.trim().isEmpty()) {
-                    AntialiasedTextArea descriptionArea = createWrappingTextArea(description, ColorScheme.LIGHT_GRAY_COLOR);
-                    descriptionArea.setBorder(new EmptyBorder(2, 0, 0, 0));
-                    descriptionArea.setAlignmentX(LEFT_ALIGNMENT);
-                    card.add(descriptionArea);
-                }
 
                 if (bounty.getItems() != null && !bounty.getItems().isEmpty()) {
                     String joinedItems = bounty.getItems().stream()

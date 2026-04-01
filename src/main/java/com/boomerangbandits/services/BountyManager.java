@@ -250,6 +250,7 @@ public class BountyManager {
 
     private void onBountyCompleted(PluginConfigResponse.Bounty bounty, PluginConfigResponse.BountyItem item) {
         String bountyId = bounty.getId() != null ? bounty.getId() : "unknown";
+        String bountyName = bounty.getName() != null && !bounty.getName().trim().isEmpty() ? bounty.getName() : bountyId;
         String itemName = item.getName() != null ? item.getName() : "Unknown Item";
         int itemId = item.getItemId();
         String rsn = client.getLocalPlayer() != null ? client.getLocalPlayer().getName() : "Unknown";
@@ -258,7 +259,7 @@ public class BountyManager {
             log.info("Bounty completed: {} - {} (rsn={})", bountyId, itemName, rsn);
 
             // Show native OSRS popup (same as collection log notification)
-            popupService.showPopup("Bounty Complete", itemName);
+            popupService.showPopup("Bounty Complete", "<col=FFFFFF>" + bountyName + "</col>:<br>" + itemName);
 
             chatMessageManager.queue(QueuedMessage.builder()
                     .type(ChatMessageType.BROADCAST)
