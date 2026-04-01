@@ -364,17 +364,6 @@ public class BoomerangBanditsPlugin extends Plugin {
                     clientThread.invoke(this::submitNameChanges);
                     break;
 
-                case "testbounty":
-                    if (!authenticated) {
-                        log.debug("::testbounty blocked — not authenticated");
-                        return;
-                    }
-                    if (bountyManager.triggerTestBounty()) {
-                        log.info("Test bounty triggered — screenshot + chat + backend POST fired");
-                    } else {
-                        log.warn("No active bounties in manifest config — nothing to test");
-                    }
-                    break;
             }
         } catch (Exception e) {
             log.error("Error handling command", e);

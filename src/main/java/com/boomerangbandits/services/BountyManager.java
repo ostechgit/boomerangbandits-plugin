@@ -226,31 +226,6 @@ public class BountyManager {
         recentNpcSpawns.clear();
     }
 
-    /**
-     * Trigger the bounty completion flow using the first active bounty from the manifest.
-     * Used by ::testbounty for end-to-end testing (screenshot → chat → backend POST).
-     *
-     * @return true if a bounty was found and the flow was triggered, false if no active bounties
-     */
-    public boolean triggerTestBounty() {
-        PluginConfigResponse latest = configSyncService.getLatestConfig();
-        if (latest == null || latest.getBounties() == null || latest.getBounties().isEmpty()) {
-            return false;
-        }
-
-        for (PluginConfigResponse.Bounty bounty : latest.getBounties()) {
-            if (bounty == null || bounty.getItems() == null || bounty.getItems().isEmpty()) {
-                continue;
-            }
-
-            PluginConfigResponse.BountyItem firstItem = bounty.getItems().get(0);
-            if (firstItem != null) {
-                onBountyCompleted(bounty, firstItem);
-                return true;
-            }
-        }
-        return false;
-    }
 
     private void pruneStaleSpawns() {
         long cutoff = System.currentTimeMillis() - WINDOW_MS;
