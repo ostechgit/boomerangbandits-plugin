@@ -518,9 +518,9 @@ public class AdminPanel extends JPanel implements Scrollable {
     // =========================================================================
 
     private JPanel buildAnnouncementSection() {
-        JPanel section = createSection("Announcement");
+        JPanel section = createSection("Create Announcement");
 
-        addLabelRow(section, "<html>Set the message shown to all clan members on login.</html>", 10f);
+        addLabelRow(section, "<html>Create a new announcement shown to all clan members on login.</html>", 10f);
         section.add(javax.swing.Box.createVerticalStrut(4));
 
         announcementTextArea = new AntialiasedTextArea(3, 0);
@@ -539,7 +539,7 @@ public class AdminPanel extends JPanel implements Scrollable {
 
         section.add(javax.swing.Box.createVerticalStrut(4));
 
-        updateAnnouncementButton = makeButton("Update");
+        updateAnnouncementButton = makeButton("Create");
         updateAnnouncementButton.addActionListener(e -> updateAnnouncement());
         section.add(updateAnnouncementButton);
 
@@ -555,13 +555,14 @@ public class AdminPanel extends JPanel implements Scrollable {
     private void updateAnnouncement() {
         String message = announcementTextArea.getText().trim();
         updateAnnouncementButton.setEnabled(false);
-        announcementResultLabel.setText("Updating...");
+        announcementResultLabel.setText("Creating...");
         announcementResultLabel.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
 
         adminApi.updateAnnouncement(message,
                 success -> SwingUtilities.invokeLater(() -> {
                     updateAnnouncementButton.setEnabled(true);
-                    announcementResultLabel.setText("Announcement updated");
+                    announcementTextArea.setText("");
+                    announcementResultLabel.setText("Announcement created");
                     announcementResultLabel.setForeground(new Color(0x4CAF50));
                 }),
                 error -> SwingUtilities.invokeLater(() -> {
@@ -679,10 +680,12 @@ public class AdminPanel extends JPanel implements Scrollable {
     // Public API
     // =========================================================================
 
+    /**
+     * @deprecated No longer used — announcement form is now create-only.
+     */
+    @Deprecated
     public void setCurrentAnnouncement(String message) {
-        SwingUtilities.invokeLater(() -> {
-            if (message != null) announcementTextArea.setText(message);
-        });
+        // Intentionally empty — form starts blank for creating new announcements.
     }
 
     public void setAttendanceTracker(EventAttendanceTracker tracker, AdminApiService api) {

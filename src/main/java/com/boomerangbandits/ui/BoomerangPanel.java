@@ -398,8 +398,6 @@ public class BoomerangPanel extends PluginPanel {
                 hubPanel.refresh();
                 break;
             case CARD_ADMIN:
-                // Pre-populate announcement field with current value from config
-                adminPanel.setCurrentAnnouncement(config.announcementMessage());
                 break;
         }
     }
