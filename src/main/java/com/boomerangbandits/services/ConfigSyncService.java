@@ -5,6 +5,8 @@ import com.boomerangbandits.api.ClanApiService;
 import com.boomerangbandits.api.models.PluginConfigResponse;
 import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
+import lombok.Getter;
+import lombok.Setter;
 import net.runelite.client.config.ConfigManager;
 
 import javax.inject.Inject;
@@ -41,6 +43,17 @@ public class ConfigSyncService {
     private Gson gson;
 
     private ScheduledFuture<?> syncTask;
+
+    @Getter
+    private volatile PluginConfigResponse latestConfig;
+
+    /**
+     * Optional callback invoked on every successful config sync.
+     * Used by the plugin to update UI sections (bounties, features, renames)
+     * that live in memory only and don't trigger ConfigChanged events.
+     */
+    @Setter
+    private volatile Runnable onConfigUpdated;
 
     /**
      * Start periodic config sync. Call only after authentication succeeds.
@@ -99,6 +112,7 @@ public class ConfigSyncService {
     }
 
     private void applyConfig(PluginConfigResponse remoteConfig) {
+        this.latestConfig = remoteConfig;
         setIfChanged("announcementMessage", remoteConfig.getAnnouncementMessage());
         setIfChanged("rollCallActive", String.valueOf(remoteConfig.isRollCallActive()));
         setIfChanged("websiteUrl", remoteConfig.getWebsiteUrl());
@@ -117,6 +131,12 @@ public class ConfigSyncService {
         }
 
         log.debug("Config sync applied successfully");
+
+        // Notify listener for in-memory-only fields (bounties, features, renames)
+        Runnable listener = onConfigUpdated;
+        if (listener != null) {
+            listener.run();
+        }
     }
 
     /**

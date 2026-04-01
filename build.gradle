@@ -32,10 +32,10 @@ dependencies {
 }
 
 group = 'com.boomerangbandits'
-version = '1.2.0'
+version = '1.3.0'
 
 // Allow overriding the backend URL at build time:
-//   ./gradlew run -PbackendUrl=https://boomerangbingo-staging.up.railway.app/api
+//   ./gradlew run -PbackendUrl=https://test.site.com/api
 // Defaults to production URL when not specified.
 def backendUrl = project.findProperty('backendUrl') ?: 'https://boomerangbandits.cc/api'
 

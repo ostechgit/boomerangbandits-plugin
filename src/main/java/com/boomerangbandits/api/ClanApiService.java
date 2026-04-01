@@ -358,6 +358,37 @@ public class ClanApiService {
         executeAsync(request, com.boomerangbandits.api.models.RankSummaryResponse.class, onSuccess, onError);
     }
 
+    /**
+     * POST /api/bounty/complete
+     * <p>
+     * Submits a bounty completion with screenshot proof.
+     * Auth headers are injected automatically by {@link AuthHeaderInterceptor}.
+     *
+     * @param bountyId   server-assigned bounty ID
+     * @param itemName   display name of the bounty item obtained
+     * @param itemId     game item ID (0 if pet-only detection)
+     * @param rsn        player's RuneScape name
+     * @param screenshot base64-encoded PNG screenshot
+     * @param onSuccess  callback with BountyCompletionResponse on success
+     * @param onError    callback with error message on failure
+     */
+    public void submitBountyCompletion(@Nonnull String bountyId,
+                                       @Nonnull String itemName,
+                                       int itemId,
+                                       @Nonnull String rsn,
+                                       @Nonnull String screenshot,
+                                       @Nonnull Consumer<com.boomerangbandits.api.models.BountyCompletionResponse> onSuccess,
+                                       @Nonnull Consumer<String> onError) {
+        String json = gson.toJson(new BountyCompletionRequest(bountyId, itemName, itemId, rsn, screenshot));
+
+        Request request = new Request.Builder()
+                .url(ApiConstants.BACKEND_BASE_URL + "/bounty/complete")
+                .post(RequestBody.create(ApiConstants.JSON, json))
+                .build();
+
+        executeAsync(request, com.boomerangbandits.api.models.BountyCompletionResponse.class, onSuccess, onError);
+    }
+
     // ======================================================================
     // INNER CLASSES (request bodies and response wrappers)
     // ======================================================================
@@ -374,6 +405,25 @@ public class ClanApiService {
             this.rsn = rsn;
             this.authToken = authToken;
             this.memberCode = memberCode;
+        }
+    }
+
+    /**
+     * Request body for POST /api/bounty/complete
+     */
+    private static class BountyCompletionRequest {
+        private final String bountyId;
+        private final String itemName;
+        private final int itemId;
+        private final String rsn;
+        private final String screenshot;
+
+        BountyCompletionRequest(String bountyId, String itemName, int itemId, String rsn, String screenshot) {
+            this.bountyId = bountyId;
+            this.itemName = itemName;
+            this.itemId = itemId;
+            this.rsn = rsn;
+            this.screenshot = screenshot;
         }
     }
 

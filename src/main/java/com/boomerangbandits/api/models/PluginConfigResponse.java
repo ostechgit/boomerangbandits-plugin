@@ -2,6 +2,7 @@ package com.boomerangbandits.api.models;
 
 import com.google.gson.annotations.SerializedName;
 import java.util.List;
+import java.util.Map;
 import lombok.Data;
 
 /**
@@ -13,15 +14,9 @@ import lombok.Data;
  */
 @Data
 public class PluginConfigResponse {
-    private String clanName;
-    private int minimumClanRank;
+    private boolean rollCallActive;
     private String announcementMessage;
     private List<String> announcements;
-    private boolean rollCallActive;
-    private String activeRollCallId;
-    private boolean sotwActive;
-    private boolean botmActive;
-    private boolean teamEventActive;
     private String websiteUrl;
 
     /**
@@ -37,11 +32,56 @@ public class PluginConfigResponse {
     private String dinkConfigUrl;
 
     /**
+     * Feature flags: server-controlled kill-switches for optional features.
+     * Key: feature name (e.g., "bounties", "itemRenames")
+     * Value: true = enabled, false = disabled
+     */
+    private Map<String, Boolean> features;
+
+    /**
+     * Bounty definitions from the manifest.
+     */
+    private List<Bounty> bounties;
+
+    /**
+     * Item name renames (e.g., "Twisted bow" -> "Twisted Bow (Renamed)").
+     * Key: original item name, Value: display name
+     */
+    private Map<String, String> itemRenames;
+
+    /**
+     * NPC name renames (e.g., "Zulrah" -> "Zulrah (Renamed)").
+     * Key: original NPC name, Value: display name
+     */
+    private Map<String, String> npcRenames;
+
+    /**
      * Outer wrapper matching the actual API response shape: {"success": true, "config": {...}}
      */
     @Data
     public static class Wrapper {
         private boolean success;
         private PluginConfigResponse config;
+    }
+
+    /**
+     * Bounty definition from the manifest.
+     */
+    @Data
+    public static class Bounty {
+        private String id;
+        private String name;
+        private String description;
+        private List<BountyItem> items;
+    }
+
+    /**
+     * Item within a bounty.
+     */
+    @Data
+    public static class BountyItem {
+        private String name;
+        private List<Integer> npcIds;
+        private int itemId;
     }
 }

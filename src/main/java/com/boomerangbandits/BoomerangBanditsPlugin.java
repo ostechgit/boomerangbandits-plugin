@@ -3,12 +3,17 @@ package com.boomerangbandits;
 import com.boomerangbandits.api.*;
 import com.boomerangbandits.api.models.NameChangeEntry;
 import com.boomerangbandits.api.WomApiService.SyncMember;
+import com.boomerangbandits.eastereggs.ItemRenameManager;
+import com.boomerangbandits.eastereggs.NPCRenameManager;
+import com.boomerangbandits.services.BountyManager;
 import com.boomerangbandits.services.CompetitionScheduler;
 import com.boomerangbandits.services.ConfigSyncService;
 import com.boomerangbandits.services.EventAttendanceTracker;
+import com.boomerangbandits.services.InGameAnnouncementService;
 import com.boomerangbandits.ui.BoomerangPanel;
 import com.boomerangbandits.ui.EventOverlay;
 import com.boomerangbandits.util.ClanValidator;
+import com.boomerangbandits.util.PopupNotificationService;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Binder;
@@ -103,6 +108,16 @@ public class BoomerangBanditsPlugin extends Plugin {
     // Sound effects
     @Inject
     private com.boomerangbandits.services.CofferDepositSoundService cofferDepositSoundService;
+    @Inject
+    private InGameAnnouncementService inGameAnnouncementService;
+    @Inject
+    private ItemRenameManager itemRenameManager;
+    @Inject
+    private NPCRenameManager npcRenameManager;
+    @Inject
+    private BountyManager bountyManager;
+    @Inject
+    private PopupNotificationService popupNotificationService;
 
     // Phase 6: Overlay
     @Inject
@@ -288,6 +303,13 @@ public class BoomerangBanditsPlugin extends Plugin {
                 }
                 // Announcements are local config — safe to update without auth
                 panel.getHomePanel().updateAnnouncements(parseAnnouncements());
+                panel.getHomePanel().updateBountySection(
+                        configSyncService.getLatestConfig() != null
+                                ? configSyncService.getLatestConfig().getBounties()
+                                : null
+                );
+                // Also deliver new announcements to in-game chat
+                inGameAnnouncementService.deliverAnnouncements(parseAnnouncements());
 
                 // Update admin visibility if admin rank threshold changed
                 if (event.getKey().equals("adminRankThreshold")) {
@@ -341,6 +363,7 @@ public class BoomerangBanditsPlugin extends Plugin {
                     log.info("Manual name change sync triggered via ::syncrsns");
                     clientThread.invoke(this::submitNameChanges);
                     break;
+
             }
         } catch (Exception e) {
             log.error("Error handling command", e);
@@ -354,6 +377,7 @@ public class BoomerangBanditsPlugin extends Plugin {
     @Subscribe
     public void onGameTick(GameTick event) {
         attendanceTracker.onGameTick();
+        popupNotificationService.processQueue();
     }
 
     @Subscribe
@@ -431,8 +455,13 @@ public class BoomerangBanditsPlugin extends Plugin {
         womApi.setAuthToken(null);
         womApi.setAccountHash(-1);
         nameChangesSubmitted = false;
+        inGameAnnouncementService.reset();
+        bountyManager.reset();
         clanValidator.reset(); // Reset clan validation cache
-        SwingUtilities.invokeLater(() -> panel.onLogout());
+        SwingUtilities.invokeLater(() -> {
+            panel.getHomePanel().updateBountySection(null);
+            panel.onLogout();
+        });
     }
 
     private void authenticate() {
@@ -443,7 +472,7 @@ public class BoomerangBanditsPlugin extends Plugin {
 
         long accountHash = client.getAccountHash();
         if (accountHash == -1) {
-            log.warn("[Auth] Skipping authentication \u2014 account hash not yet available");
+            log.warn("[Auth] Skipping authentication - account hash not yet available");
             authenticating = false;
             return;
         }
@@ -500,6 +529,15 @@ public class BoomerangBanditsPlugin extends Plugin {
 
                         // Start config sync now that we have a member code
                         configSyncService.start(executor);
+                        configSyncService.setOnConfigUpdated(() -> SwingUtilities.invokeLater(() -> {
+                            panel.getHomePanel().updateBountySection(
+                                    configSyncService.getLatestConfig() != null
+                                            ? configSyncService.getLatestConfig().getBounties()
+                                            : null
+                            );
+                            panel.getHomePanel().updateAnnouncements(parseAnnouncements());
+                            inGameAnnouncementService.deliverAnnouncements(parseAnnouncements());
+                        }));
 
                         // Start competition scheduler
                         competitionScheduler.start(executor);
@@ -515,6 +553,13 @@ public class BoomerangBanditsPlugin extends Plugin {
                         SwingUtilities.invokeLater(() -> {
                             panel.onAuthenticated();
                             panel.getHomePanel().updateAnnouncements(parseAnnouncements());
+                            panel.getHomePanel().updateBountySection(
+                                    configSyncService.getLatestConfig() != null
+                                            ? configSyncService.getLatestConfig().getBounties()
+                                            : null
+                            );
+                            // Deliver announcements to in-game chat on first auth
+                            inGameAnnouncementService.deliverAnnouncements(parseAnnouncements());
                             // Update admin visibility after authentication
                             panel.updateAdminVisibility();
                         });
@@ -525,7 +570,7 @@ public class BoomerangBanditsPlugin extends Plugin {
                         authenticating = false;
                         // Backend created the member row but hasn't issued a code yet.
                         // Admin will DM the member code — player must enter it in settings.
-                        log.info("[Auth] Member registered as pending \u2014 awaiting member code from admin");
+                        log.info("[Auth] Member registered as pending - awaiting member code from admin");
                         SwingUtilities.invokeLater(() ->
                                 panel.getHomePanel().updateStatus(
                                         "Registered! Awaiting member code from admin", ColorScheme.LIGHT_GRAY_COLOR));
@@ -720,10 +765,16 @@ public class BoomerangBanditsPlugin extends Plugin {
 
     private void registerNotifiers() {
         eventBus.register(cofferDepositSoundService);
+        itemRenameManager.startUp();
+        npcRenameManager.startUp();
+        bountyManager.startUp();
     }
 
     private void unregisterNotifiers() {
         eventBus.unregister(cofferDepositSoundService);
+        itemRenameManager.shutDown();
+        npcRenameManager.shutDown();
+        bountyManager.shutDown();
     }
 
     // ======================================================================

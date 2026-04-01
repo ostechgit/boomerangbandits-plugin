@@ -29,6 +29,15 @@ public interface BoomerangBanditsConfig extends Config {
     )
     default int menuPriority() { return 5; }
 
+    @ConfigItem(
+        keyName = "enableEasterEggs",
+        name = "Easter Eggs",
+        description = "Enable clan Easter egg renames for items and NPCs",
+        section = generalSection,
+        position = 1
+    )
+    default boolean enableEasterEggs() { return true; }
+
     // ======================================================================
     // SOUND SETTINGS
     // ======================================================================
