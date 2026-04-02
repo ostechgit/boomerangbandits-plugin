@@ -342,12 +342,9 @@ public class HomePanel extends JPanel {
                             .orElse("");
 
                     if (!joinedItems.isEmpty()) {
-                        JLabel itemLabel = new AntialiasedLabel(joinedItems);
-                        itemLabel.setForeground(new Color(0xA0A0A0));
-                        itemLabel.setFont(FontManager.getRunescapeSmallFont());
-                        itemLabel.setBorder(new EmptyBorder(2, 0, 0, 0));
-                        itemLabel.setAlignmentX(LEFT_ALIGNMENT);
-                        card.add(itemLabel);
+                        AntialiasedTextArea itemArea = createWrappingTextArea(joinedItems, new Color(0xA0A0A0));
+                        itemArea.setBorder(new EmptyBorder(2, 0, 0, 0));
+                        card.add(itemArea);
                     }
                 }
 
@@ -588,6 +585,20 @@ public class HomePanel extends JPanel {
         } else {
             return String.valueOf(xp);
         }
+    }
+
+    // ======================================================================
+    // LAYOUT OVERRIDES — prevent horizontal overflow (same pattern as
+    // CollapsibleSection / WidthConstrainedPanel)
+    // ======================================================================
+
+    @Override
+    public Dimension getPreferredSize() {
+        Dimension pref = super.getPreferredSize();
+        if (getParent() != null && getParent().getWidth() > 0) {
+            return new Dimension(getParent().getWidth(), pref.height);
+        }
+        return pref;
     }
 
     // ======================================================================
