@@ -2,6 +2,7 @@ package com.boomerangbandits.services;
 
 import com.boomerangbandits.api.models.PluginConfigResponse;
 import com.boomerangbandits.api.ClanApiService;
+import com.boomerangbandits.util.GameModeGuard;
 import com.boomerangbandits.util.ScreenshotService;
 import com.boomerangbandits.util.PopupNotificationService;
 import lombok.Getter;
@@ -59,6 +60,7 @@ public class BountyManager {
     private final FeatureFlagService featureFlagService;
     private final ClanApiService clanApi;
     private final PopupNotificationService popupService;
+    private final GameModeGuard gameModeGuard;
     private final ConcurrentLinkedQueue<NpcSpawnEntry> recentNpcSpawns = new ConcurrentLinkedQueue<>();
 
     @Inject
@@ -70,7 +72,8 @@ public class BountyManager {
             Client client,
             FeatureFlagService featureFlagService,
             ClanApiService clanApi,
-            PopupNotificationService popupService
+            PopupNotificationService popupService,
+            GameModeGuard gameModeGuard
     ) {
         this.eventBus = eventBus;
         this.configSyncService = configSyncService;
@@ -80,6 +83,7 @@ public class BountyManager {
         this.featureFlagService = featureFlagService;
         this.clanApi = clanApi;
         this.popupService = popupService;
+        this.gameModeGuard = gameModeGuard;
     }
 
     @Getter
@@ -96,6 +100,9 @@ public class BountyManager {
 
     @Subscribe
     public void onNpcSpawned(NpcSpawned event) {
+        if (!gameModeGuard.isStandardWorld()) {
+            return;
+        }
         if (!featureFlagService.isBountyTrackingEnabled()) {
             return;
         }
@@ -122,6 +129,9 @@ public class BountyManager {
 
     @Subscribe
     public void onChatMessage(ChatMessage event) {
+        if (!gameModeGuard.isStandardWorld()) {
+            return;
+        }
         if (!featureFlagService.isBountyTrackingEnabled() || event.getType() != ChatMessageType.GAMEMESSAGE) {
             return;
         }
@@ -159,11 +169,17 @@ public class BountyManager {
 
     @Subscribe
     public void onNpcLootReceived(NpcLootReceived event) {
+        if (!gameModeGuard.isStandardWorld()) {
+            return;
+        }
         checkLootForBounty(event.getItems());
     }
 
     @Subscribe
     public void onPlayerLootReceived(PlayerLootReceived event) {
+        if (!gameModeGuard.isStandardWorld()) {
+            return;
+        }
         checkLootForBounty(event.getItems());
     }
 
@@ -174,6 +190,9 @@ public class BountyManager {
      */
     @Subscribe
     public void onLootReceived(LootReceived event) {
+        if (!gameModeGuard.isStandardWorld()) {
+            return;
+        }
         if (event.getType() != LootRecordType.NPC || !SPECIAL_LOOT_NPC_NAMES.contains(event.getName())) {
             return;
         }
