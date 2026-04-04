@@ -14,6 +14,7 @@ package com.boomerangbandits.services;
  */
 
 import com.boomerangbandits.api.models.AttendanceEntry;
+import com.boomerangbandits.util.GameModeGuard;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Client;
@@ -53,6 +54,8 @@ public class EventAttendanceTracker {
     private final Map<String, MemberAttendance> buffer = new TreeMap<>();
     @Inject
     private Client client;
+    @Inject
+    private GameModeGuard gameModeGuard;
     @Getter
     private boolean running = false;
 
@@ -67,6 +70,10 @@ public class EventAttendanceTracker {
     // -------------------------------------------------------------------------
 
     public void startEvent() {
+        if (!gameModeGuard.isStandardWorld()) {
+            log.warn("[Attendance] Cannot start event — non-standard world");
+            return;
+        }
         buffer.clear();
         eventStartTick = client.getTickCount();
         running = true;

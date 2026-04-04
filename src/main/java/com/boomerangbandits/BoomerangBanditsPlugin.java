@@ -13,6 +13,7 @@ import com.boomerangbandits.services.InGameAnnouncementService;
 import com.boomerangbandits.ui.BoomerangPanel;
 import com.boomerangbandits.ui.EventOverlay;
 import com.boomerangbandits.util.ClanValidator;
+import com.boomerangbandits.util.GameModeGuard;
 import com.boomerangbandits.util.PopupNotificationService;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
@@ -26,6 +27,7 @@ import net.runelite.api.clan.ClanSettings;
 import net.runelite.api.events.*;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.config.ConfigManager;
+import net.runelite.client.config.RuneScapeProfileType;
 import net.runelite.client.eventbus.EventBus;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.events.ConfigChanged;
@@ -118,6 +120,8 @@ public class BoomerangBanditsPlugin extends Plugin {
     private BountyManager bountyManager;
     @Inject
     private PopupNotificationService popupNotificationService;
+    @Inject
+    private GameModeGuard gameModeGuard;
 
     // Phase 6: Overlay
     @Inject
@@ -376,27 +380,42 @@ public class BoomerangBanditsPlugin extends Plugin {
 
     @Subscribe
     public void onGameTick(GameTick event) {
+        if (!gameModeGuard.isStandardWorld()) {
+            return;
+        }
         attendanceTracker.onGameTick();
         popupNotificationService.processQueue();
     }
 
     @Subscribe
     public void onPlayerSpawned(PlayerSpawned event) {
+        if (!gameModeGuard.isStandardWorld()) {
+            return;
+        }
         attendanceTracker.onPlayerSpawned(event.getPlayer());
     }
 
     @Subscribe
     public void onPlayerDespawned(PlayerDespawned event) {
+        if (!gameModeGuard.isStandardWorld()) {
+            return;
+        }
         attendanceTracker.onPlayerDespawned(event.getPlayer());
     }
 
     @Subscribe
     public void onClanMemberJoined(ClanMemberJoined event) {
+        if (!gameModeGuard.isStandardWorld()) {
+            return;
+        }
         attendanceTracker.onClanMemberJoined(event.getClanMember());
     }
 
     @Subscribe
     public void onClanMemberLeft(ClanMemberLeft event) {
+        if (!gameModeGuard.isStandardWorld()) {
+            return;
+        }
         attendanceTracker.onClanMemberLeft(event.getClanMember());
     }
 
@@ -405,6 +424,9 @@ public class BoomerangBanditsPlugin extends Plugin {
     // ======================================================================
 
     private void handleLogin() {
+        RuneScapeProfileType profile = RuneScapeProfileType.getCurrent(client);
+        log.info("Logged in — profile: {}, worldTypes: {}", profile, client.getWorldType());
+
         // Reset validation state on login
         clanValidator.reset();
 
@@ -598,6 +620,10 @@ public class BoomerangBanditsPlugin extends Plugin {
      * Called on login after auth, and can be called on manual refresh.
      */
     public void triggerPlayerUpdate(String rsn, long accountHash) {
+        if (!gameModeGuard.isStandardWorld()) {
+            log.info("[WOM] Skipping player update — non-standard world");
+            return;
+        }
         // Derive account type from the game client varbit rather than config
         int ironmanVarbit = client.getVarbitValue(net.runelite.api.gameval.VarbitID.IRONMAN);
         String accountType;
