@@ -4,6 +4,8 @@ import com.boomerangbandits.api.AuthHeaderInterceptor;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
+import java.io.File;
+import okhttp3.Cache;
 import okhttp3.OkHttpClient;
 
 import javax.inject.Named;
@@ -28,6 +30,20 @@ public class BoomerangBanditsModule extends AbstractModule {
     OkHttpClient provideBoomerangHttpClient(OkHttpClient base, AuthHeaderInterceptor interceptor) {
         return base.newBuilder()
                 .addInterceptor(interceptor)
+                .build();
+    }
+
+    @Provides
+    @Singleton
+    @Named("boomerangWom")
+    OkHttpClient provideBoomerangWomHttpClient(@Named("boomerang") OkHttpClient base) {
+        File cacheDir = new File(new File(System.getProperty("user.home"), ".runelite"), "boomerang-bandits-http-cache");
+        if (!cacheDir.exists()) {
+            cacheDir.mkdirs();
+        }
+
+        return base.newBuilder()
+                .cache(new Cache(cacheDir, 2L * 1024L * 1024L))
                 .build();
     }
 }

@@ -47,6 +47,17 @@ public class ConfigSyncService {
     @Getter
     private volatile PluginConfigResponse latestConfig;
 
+    private static final int DEFAULT_WOM_LIST_POLLING_INTERVAL_MINUTES = 10;
+    private static final int DEFAULT_WOM_DETAIL_POLLING_INTERVAL_MINUTES = 5;
+    private static final int MIN_WOM_POLLING_INTERVAL_MINUTES = 1;
+    private static final int MAX_WOM_POLLING_INTERVAL_MINUTES = 1440;
+
+    @Getter
+    private volatile int womListPollingIntervalMinutes = DEFAULT_WOM_LIST_POLLING_INTERVAL_MINUTES;
+
+    @Getter
+    private volatile int womDetailPollingIntervalMinutes = DEFAULT_WOM_DETAIL_POLLING_INTERVAL_MINUTES;
+
     /**
      * Optional callback invoked on every successful config sync.
      * Used by the plugin to update UI sections (bounties, features, renames)
@@ -113,10 +124,20 @@ public class ConfigSyncService {
 
     private void applyConfig(PluginConfigResponse remoteConfig) {
         this.latestConfig = remoteConfig;
+        int rawListInterval = remoteConfig.getWomListPollingIntervalMinutes();
+        this.womListPollingIntervalMinutes = rawListInterval > 0
+                ? Math.max(MIN_WOM_POLLING_INTERVAL_MINUTES, Math.min(rawListInterval, MAX_WOM_POLLING_INTERVAL_MINUTES))
+                : DEFAULT_WOM_LIST_POLLING_INTERVAL_MINUTES;
+        int rawDetailInterval = remoteConfig.getWomDetailPollingIntervalMinutes();
+        this.womDetailPollingIntervalMinutes = rawDetailInterval > 0
+                ? Math.max(MIN_WOM_POLLING_INTERVAL_MINUTES, Math.min(rawDetailInterval, MAX_WOM_POLLING_INTERVAL_MINUTES))
+                : DEFAULT_WOM_DETAIL_POLLING_INTERVAL_MINUTES;
         setIfChanged("announcementMessage", remoteConfig.getAnnouncementMessage());
         setIfChanged("rollCallActive", String.valueOf(remoteConfig.isRollCallActive()));
         setIfChanged("websiteUrl", remoteConfig.getWebsiteUrl());
         setIfChanged("discordUrl", remoteConfig.getDiscordUrl());
+        setIfChanged("womListPollingIntervalMinutes", String.valueOf(this.womListPollingIntervalMinutes));
+        setIfChanged("womDetailPollingIntervalMinutes", String.valueOf(this.womDetailPollingIntervalMinutes));
 
         // Serialize announcements list to JSON for config storage
         List<String> announcements = remoteConfig.getAnnouncements();

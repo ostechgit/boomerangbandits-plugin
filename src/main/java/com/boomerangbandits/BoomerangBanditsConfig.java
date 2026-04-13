@@ -179,4 +179,20 @@ public interface BoomerangBanditsConfig extends Config {
         hidden = true
     )
     default String dinkConfigUrl() { return ""; }
+
+    @ConfigItem(
+        keyName = "womListPollingIntervalMinutes",
+        name = "",
+        description = "",
+        hidden = true
+    )
+    default int womListPollingIntervalMinutes() { return 10; }
+
+    @ConfigItem(
+        keyName = "womDetailPollingIntervalMinutes",
+        name = "",
+        description = "",
+        hidden = true
+    )
+    default int womDetailPollingIntervalMinutes() { return 5; }
 }

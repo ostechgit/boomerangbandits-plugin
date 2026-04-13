@@ -45,7 +45,7 @@ public class WomApiService {
 	private volatile long accountHash = -1;
 
     @Inject
-    public WomApiService(@Named("boomerang") OkHttpClient httpClient, Gson gson, BoomerangBanditsConfig config) {
+    public WomApiService(@Named("boomerangWom") OkHttpClient httpClient, Gson gson, BoomerangBanditsConfig config) {
         this.httpClient = httpClient;
         this.gson = gson;
         this.config = config;

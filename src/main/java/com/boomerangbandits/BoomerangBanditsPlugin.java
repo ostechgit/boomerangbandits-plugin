@@ -551,18 +551,19 @@ public class BoomerangBanditsPlugin extends Plugin {
 
                         // Start config sync now that we have a member code
                         configSyncService.start(executor);
-                        configSyncService.setOnConfigUpdated(() -> SwingUtilities.invokeLater(() -> {
-                            panel.getHomePanel().updateBountySection(
-                                    configSyncService.getLatestConfig() != null
-                                            ? configSyncService.getLatestConfig().getBounties()
-                                            : null
-                            );
-                            panel.getHomePanel().updateAnnouncements(parseAnnouncements());
-                            inGameAnnouncementService.deliverAnnouncements(parseAnnouncements());
-                        }));
+                        configSyncService.setOnConfigUpdated(() -> {
+                            competitionScheduler.start(executor);
 
-                        // Start competition scheduler
-                        competitionScheduler.start(executor);
+                            SwingUtilities.invokeLater(() -> {
+                                panel.getHomePanel().updateBountySection(
+                                        configSyncService.getLatestConfig() != null
+                                                ? configSyncService.getLatestConfig().getBounties()
+                                                : null
+                                );
+                                panel.getHomePanel().updateAnnouncements(parseAnnouncements());
+                                inGameAnnouncementService.deliverAnnouncements(parseAnnouncements());
+                            });
+                        });
 
                         // Start clan rank sync
                         clanRankSyncService.start(executor);

@@ -1,6 +1,5 @@
 package com.boomerangbandits.services;
 
-import com.boomerangbandits.BoomerangBanditsConfig;
 import com.boomerangbandits.api.WomApiService;
 import com.boomerangbandits.api.models.WomCompetition;
 import lombok.Getter;
@@ -26,14 +25,13 @@ import java.util.concurrent.TimeUnit;
 @Singleton
 public class CompetitionScheduler {
 
-    private static final long LIST_INTERVAL_MINUTES = 10;
-    private static final long DETAIL_INTERVAL_MINUTES = 5;
-
     private final WomApiService womApi;
-    private final BoomerangBanditsConfig config;
+    private final ConfigSyncService configSyncService;
 
     private ScheduledFuture<?> listTask;
     private ScheduledFuture<?> detailTask;
+    private volatile int currentListIntervalMinutes = -1;
+    private volatile int currentDetailIntervalMinutes = -1;
 
     /**
      * -- GETTER --
@@ -45,9 +43,9 @@ public class CompetitionScheduler {
     private volatile int activeCompetitionId = -1;
 
     @Inject
-    public CompetitionScheduler(WomApiService womApi, BoomerangBanditsConfig config) {
+    public CompetitionScheduler(WomApiService womApi, ConfigSyncService configSyncService) {
         this.womApi = womApi;
-        this.config = config;
+        this.configSyncService = configSyncService;
     }
 
     /**
@@ -56,26 +54,41 @@ public class CompetitionScheduler {
      *
      * @param executor the plugin's shared ScheduledExecutorService
      */
-    public void start(ScheduledExecutorService executor) {
+    public synchronized void start(ScheduledExecutorService executor) {
         log.debug("Starting CompetitionScheduler tasks...");
 
-        // Fetch competition list every 10 minutes, starting immediately
+        int listIntervalMinutes = configSyncService.getWomListPollingIntervalMinutes();
+        int detailIntervalMinutes = configSyncService.getWomDetailPollingIntervalMinutes();
+
+        if (listTask != null && !listTask.isDone() && detailTask != null && !detailTask.isDone()) {
+            if (listIntervalMinutes == currentListIntervalMinutes && detailIntervalMinutes == currentDetailIntervalMinutes) {
+                return;
+            }
+            log.info("Competition polling interval changed (list: {}m -> {}m, detail: {}m -> {}m), restarting",
+                    currentListIntervalMinutes,
+                    listIntervalMinutes,
+                    currentDetailIntervalMinutes,
+                    detailIntervalMinutes);
+            stop();
+        }
+
         listTask = executor.scheduleAtFixedRate(
                 this::refreshCompetitionList,
                 0,
-                LIST_INTERVAL_MINUTES,
+                listIntervalMinutes,
                 TimeUnit.MINUTES
         );
-        log.debug("Scheduled competition list task");
+        currentListIntervalMinutes = listIntervalMinutes;
+        log.debug("Scheduled competition list task ({} minutes)", listIntervalMinutes);
 
-        // Fetch active competition details every 5 minutes, starting after 30s
         detailTask = executor.scheduleAtFixedRate(
                 this::refreshActiveCompetition,
                 30,
-                DETAIL_INTERVAL_MINUTES * 60,
+                detailIntervalMinutes * 60L,
                 TimeUnit.SECONDS
         );
-        log.debug("Scheduled competition detail task");
+        currentDetailIntervalMinutes = detailIntervalMinutes;
+        log.debug("Scheduled competition detail task ({} minutes)", detailIntervalMinutes);
 
         log.info("CompetitionScheduler started");
     }
@@ -84,7 +97,7 @@ public class CompetitionScheduler {
      * Stop all polling tasks.
      * Call from plugin shutDown().
      */
-    public void stop() {
+    public synchronized void stop() {
         if (listTask != null) {
             listTask.cancel(false);
             listTask = null;
@@ -93,6 +106,8 @@ public class CompetitionScheduler {
             detailTask.cancel(false);
             detailTask = null;
         }
+        currentListIntervalMinutes = -1;
+        currentDetailIntervalMinutes = -1;
         activeCompetitionId = -1;
         log.info("CompetitionScheduler stopped");
     }

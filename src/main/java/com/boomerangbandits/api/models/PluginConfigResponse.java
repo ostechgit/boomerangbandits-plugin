@@ -15,6 +15,8 @@ import lombok.Data;
 @Data
 public class PluginConfigResponse {
     private boolean rollCallActive;
+    private int womListPollingIntervalMinutes = 10;
+    private int womDetailPollingIntervalMinutes = 5;
     private String announcementMessage;
     private List<String> announcements;
     private String websiteUrl;

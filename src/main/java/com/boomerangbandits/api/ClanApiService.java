@@ -88,8 +88,14 @@ public class ClanApiService {
         String memberCode = config.memberCode();
         String json = gson.toJson(new VerifyRequest(rsn, authToken, memberCode));
 
+        String url = ApiConstants.BACKEND_BASE_URL + "/auth/verify";
+        log.info("[Auth] verifyMember url={} rsn={} hash={} mc={}... atLen={}",
+                url, rsn, accountHash,
+                memberCode != null && memberCode.length() > 8 ? memberCode.substring(0, 8) : memberCode,
+                authToken != null ? authToken.length() : -1);
+
         Request.Builder builder = new Request.Builder()
-                .url(ApiConstants.BACKEND_BASE_URL + "/auth/verify")
+                .url(url)
                 .header("X-Account-Hash", String.valueOf(accountHash))
                 .post(RequestBody.create(ApiConstants.JSON, json));
 
@@ -183,6 +189,7 @@ public class ClanApiService {
         httpClient.newCall(request).enqueue(new Callback() {
             @Override
             public void onFailure(Call call, IOException e) {
+                log.warn("[HTTP] onFailure url={} error={}", call.request().url(), e.getMessage());
                 handleFailure(e.getMessage(), onError);
             }
 
@@ -190,6 +197,17 @@ public class ClanApiService {
             public void onResponse(Call call, Response response) throws IOException {
                 try (response) {
                     if (!response.isSuccessful()) {
+                        String body = response.body() != null ? response.body().string() : "";
+                        log.warn("[HTTP] {} {} → {} body={} "
+                                        + "server={} cf-ray={} via={} cache={}",
+                                call.request().method(),
+                                call.request().url(),
+                                response.code(),
+                                body.length() > 200 ? body.substring(0, 200) : body,
+                                response.header("server", "-"),
+                                response.header("cf-ray", "-"),
+                                response.header("via", "-"),
+                                response.cacheResponse() != null ? "HIT" : "NETWORK");
                         handleFailure("HTTP " + response.code() + ": " + response.message(), onError);
                         return;
                     }
